@@ -37,7 +37,7 @@ function MonthlyBudgetView({ year, month }: { year: number; month: number }) {
   const budgets = useStore((s) => s.budgets);
   const setBudget = useStore((s) => s.setBudget);
 
-  const expenseRoots = categories.filter((c) => c.kind === 'expense' && !c.parentId && !c.archived);
+  const expenseRoots = categories.filter((c) => c.kind === 'expense' && !c.parentId && !c.archived && !c.system);
 
   const totalBudget = expenseRoots.reduce(
     (s, c) => s + (budgets.find((b) => b.categoryId === c.id && b.year === year && b.month === month)?.amount ?? 0),
@@ -130,7 +130,7 @@ function AnnualBudgetView({ year }: { year: number }) {
   const transactions = useStore((s) => s.transactions);
   const budgets = useStore((s) => s.budgets);
 
-  const expenseRoots = categories.filter((c) => c.kind === 'expense' && !c.parentId && !c.archived);
+  const expenseRoots = categories.filter((c) => c.kind === 'expense' && !c.parentId && !c.archived && !c.system);
 
   const rows = expenseRoots.map((cat) => {
     const monthly = Array.from({ length: 12 }, (_, i) => {

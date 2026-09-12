@@ -12,6 +12,7 @@ import type {
 } from '../types';
 import { newId, todayISO } from '../utils/id';
 import { buildDefaultCategories, SYSTEM_CATEGORY_INVESTMENT_BUY, SYSTEM_CATEGORY_INVESTMENT_SELL } from './seed';
+import { buildDemoDataset } from './demoData';
 import { computeDueOccurrences, generateTransactionsForRule } from '../utils/recurring';
 
 interface State {
@@ -68,21 +69,22 @@ interface State {
 
   ensureSystemCategories: () => { buyId: string; sellId: string };
   resetAllData: () => void;
+  loadDemoData: () => void;
 }
 
-const defaultCategories = buildDefaultCategories();
+const demoDataset = buildDemoDataset();
 
 export const useStore = create<State>()(
   persist(
     (set, get) => ({
-      accounts: [],
-      categories: defaultCategories,
-      transactions: [],
-      budgets: [],
-      investments: [],
-      investmentTransactions: [],
-      patrimonioAssets: [],
-      recurringTransactions: [],
+      accounts: demoDataset.accounts,
+      categories: demoDataset.categories,
+      transactions: demoDataset.transactions,
+      budgets: demoDataset.budgets,
+      investments: demoDataset.investments,
+      investmentTransactions: demoDataset.investmentTransactions,
+      patrimonioAssets: demoDataset.patrimonioAssets,
+      recurringTransactions: demoDataset.recurringTransactions,
       selectedTransactionIds: [],
 
       addAccount: (a) =>
@@ -284,6 +286,21 @@ export const useStore = create<State>()(
           recurringTransactions: [],
           selectedTransactionIds: [],
         }),
+
+      loadDemoData: () => {
+        const demo = buildDemoDataset();
+        set({
+          accounts: demo.accounts,
+          categories: demo.categories,
+          transactions: demo.transactions,
+          budgets: demo.budgets,
+          investments: demo.investments,
+          investmentTransactions: demo.investmentTransactions,
+          patrimonioAssets: demo.patrimonioAssets,
+          recurringTransactions: demo.recurringTransactions,
+          selectedTransactionIds: [],
+        });
+      },
     }),
     {
       name: 'finanza-personale-storage',
