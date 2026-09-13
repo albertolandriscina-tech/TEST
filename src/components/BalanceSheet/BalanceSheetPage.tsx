@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { CheckCircle2, XCircle } from 'lucide-react';
 import { useStore } from '../../store/useStore';
-import { ACCOUNT_TYPE_LABELS, ASSET_CATEGORY_LABELS } from '../../types';
+import { ACCOUNT_TYPE_LABELS, ASSET_CATEGORY_LABELS, LIABILITY_ACCOUNT_TYPES } from '../../types';
 import { computeAllAccountBalances, computeAllHoldings, computeIncomeStatement, computeNetWorth, computeQuadratura } from '../../utils/ledger';
 import { formatCurrency } from '../../utils/format';
 import { CategoryIconCircle } from '../common/CategoryBadge';
@@ -42,8 +42,8 @@ export function BalanceSheetPage() {
     [transactions, categories, year]
   );
 
-  const attivi = accounts.filter((a) => (balances[a.id] ?? 0) >= 0);
-  const passivi = accounts.filter((a) => (balances[a.id] ?? 0) < 0);
+  const attivi = accounts.filter((a) => !LIABILITY_ACCOUNT_TYPES.includes(a.type) && (balances[a.id] ?? 0) >= 0);
+  const passivi = accounts.filter((a) => LIABILITY_ACCOUNT_TYPES.includes(a.type) || (balances[a.id] ?? 0) < 0);
 
   const totaleAttivita = netWorth.liquidita + netWorth.investimenti + netWorth.patrimonioImmobiliare;
   const totalePassivita = netWorth.debiti;

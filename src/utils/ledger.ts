@@ -7,6 +7,7 @@ import type {
   PatrimonioAsset,
   Transaction,
 } from '../types';
+import { LIABILITY_ACCOUNT_TYPES } from '../types';
 
 /**
  * Effetto (delta) di un movimento sul saldo di un determinato conto.
@@ -34,6 +35,15 @@ export function computeAccountBalance(account: Account, transactions: Transactio
     balance += accountDelta(tx, account.id);
   }
   return balance;
+}
+
+/**
+ * Saldo di un conto ai fini del calcolo del patrimonio netto: per i conti sempre-passività
+ * (es. Mutuo, Carta di credito) il contributo è sempre negativo (debito), indipendentemente
+ * dal segno del saldo calcolato dai movimenti.
+ */
+export function signedBalanceForNetWorth(account: Account, balance: number): number {
+  return LIABILITY_ACCOUNT_TYPES.includes(account.type) ? -Math.abs(balance) : balance;
 }
 
 export function computeAllAccountBalances(
@@ -248,8 +258,15 @@ export function computeNetWorth(
   let debiti = 0;
   for (const acc of accounts) {
     const bal = balances[acc.id] ?? 0;
-    if (bal >= 0) liquidita += bal;
-    else debiti += Math.abs(bal);
+    if (LIABILITY_ACCOUNT_TYPES.includes(acc.type)) {
+      // Conti come "Mutuo" o "Carta di credito" sono sempre una passività,
+      // indipendentemente dal segno del saldo calcolato.
+      debiti += Math.abs(bal);
+    } else if (bal >= 0) {
+      liquidita += bal;
+    } else {
+      debiti += Math.abs(bal);
+    }
   }
   const investimenti = holdings.reduce((s, h) => s + h.currentValue, 0);
   const patrimonioImmobiliare = assets.reduce((s, a) => s + a.value, 0);

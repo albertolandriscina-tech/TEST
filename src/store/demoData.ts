@@ -61,7 +61,8 @@ export function buildDemoDataset(): DemoDataset {
   const contanti: Account = { id: newId(), name: 'Contanti', type: 'cash', initialBalance: 120, currency: 'EUR', createdAt: nowISO };
   const contoTitoli: Account = { id: newId(), name: 'Conto Titoli', type: 'investment', initialBalance: 0, currency: 'EUR', createdAt: nowISO };
   const cartaCredito: Account = { id: newId(), name: 'Carta di Credito', type: 'credit_card', initialBalance: 0, currency: 'EUR', createdAt: nowISO };
-  const accounts = [contoCorrente, contanti, contoTitoli, cartaCredito];
+  const mutuoCasa: Account = { id: newId(), name: 'Mutuo Casa', type: 'mortgage', initialBalance: -95000, currency: 'EUR', createdAt: nowISO };
+  const accounts = [contoCorrente, contanti, contoTitoli, cartaCredito, mutuoCasa];
 
   const transactions: Transaction[] = [];
   const tx = (partial: Omit<Transaction, 'id' | 'createdAt'>) =>

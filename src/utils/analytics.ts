@@ -1,6 +1,6 @@
 import { addDays, endOfMonth, format, isAfter, isBefore, parseISO, startOfMonth, subMonths, subYears } from 'date-fns';
 import type { Account, Category, PatrimonioAsset, Transaction } from '../types';
-import { accountDelta, getCategoryAndDescendantIds, type InvestmentHolding } from './ledger';
+import { accountDelta, getCategoryAndDescendantIds, signedBalanceForNetWorth, type InvestmentHolding } from './ledger';
 import { MONTH_NAMES_SHORT_IT } from './format';
 
 export interface CashFlowBucket {
@@ -196,7 +196,7 @@ export function buildNetWorthTrend(
           bal += accountDelta(t, acc.id);
         }
       }
-      accountsTotal += bal;
+      accountsTotal += signedBalanceForNetWorth(acc, bal);
     }
     points.push({
       key: format(m, 'yyyy-MM'),

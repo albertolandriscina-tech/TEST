@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { Archive, ArchiveRestore, Plus, Trash2, Pencil } from 'lucide-react';
 import { useStore } from '../../store/useStore';
-import { ACCOUNT_TYPE_LABELS } from '../../types';
+import { ACCOUNT_TYPE_LABELS, LIABILITY_ACCOUNT_TYPES } from '../../types';
 import type { Account } from '../../types';
-import { computeAllAccountBalances } from '../../utils/ledger';
+import { computeAllAccountBalances, signedBalanceForNetWorth } from '../../utils/ledger';
 import { formatCurrency } from '../../utils/format';
 import { AccountForm } from './AccountForm';
 import { ConfirmDialog } from '../common/ConfirmDialog';
@@ -23,7 +23,7 @@ export function AccountsPage() {
   const balances = useMemo(() => computeAllAccountBalances(accounts, transactions), [accounts, transactions]);
 
   const visibleAccounts = accounts.filter((a) => showArchived || !a.archived);
-  const total = visibleAccounts.reduce((s, a) => s + (balances[a.id] ?? 0), 0);
+  const total = visibleAccounts.reduce((s, a) => s + signedBalanceForNetWorth(a, balances[a.id] ?? 0), 0);
 
   return (
     <div className="space-y-4">
@@ -66,7 +66,11 @@ export function AccountsPage() {
                 <div className="text-xs text-slate-400 truncate">
                   {ACCOUNT_TYPE_LABELS[acc.type]} · {acc.currency}
                 </div>
-                <div className={`text-base font-semibold mt-1 ${bal >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                <div
+                  className={`text-base font-semibold mt-1 ${
+                    LIABILITY_ACCOUNT_TYPES.includes(acc.type) || bal < 0 ? 'text-red-600' : 'text-emerald-600'
+                  }`}
+                >
                   {formatCurrency(bal, acc.currency)}
                 </div>
               </div>
@@ -110,7 +114,11 @@ export function AccountsPage() {
                   <td className="font-medium text-slate-700">{acc.name}</td>
                   <td>{ACCOUNT_TYPE_LABELS[acc.type]}</td>
                   <td>{acc.currency}</td>
-                  <td className={`text-right font-semibold ${bal >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  <td
+                    className={`text-right font-semibold ${
+                      LIABILITY_ACCOUNT_TYPES.includes(acc.type) || bal < 0 ? 'text-red-600' : 'text-emerald-600'
+                    }`}
+                  >
                     {formatCurrency(bal, acc.currency)}
                   </td>
                   <td>

@@ -1,18 +1,21 @@
 // ---------- Conti ----------
 
-export type AccountType = 'bank' | 'cash' | 'investment' | 'credit_card' | 'other';
+export type AccountType = 'bank' | 'cash' | 'investment' | 'credit_card' | 'mortgage' | 'other';
 
 export const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
   bank: 'Conto bancario',
   cash: 'Contanti',
   investment: 'Conto titoli / investimenti',
   credit_card: 'Carta di credito',
+  mortgage: 'Mutuo',
   other: 'Altro',
 };
 
-// I conti di tipo "credit_card" sono considerati passività (debiti): un saldo
-// positivo rappresenta un debito verso il fornitore della carta.
-export const LIABILITY_ACCOUNT_TYPES: AccountType[] = ['credit_card'];
+// I conti di questi tipi sono considerati sempre passività (debiti), indipendentemente
+// dal segno del saldo calcolato: un conto "Mutuo", ad esempio, rappresenta sempre un
+// debito residuo verso la banca, anche se per errore o per un rimborso il saldo
+// risultasse temporaneamente positivo.
+export const LIABILITY_ACCOUNT_TYPES: AccountType[] = ['credit_card', 'mortgage'];
 
 export interface Account {
   id: string;

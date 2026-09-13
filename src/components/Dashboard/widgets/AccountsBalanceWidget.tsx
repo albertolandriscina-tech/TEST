@@ -1,15 +1,17 @@
 import { useMemo } from 'react';
-import { Landmark, Wallet, TrendingUp, CreditCard, PiggyBank } from 'lucide-react';
+import { Landmark, Wallet, TrendingUp, CreditCard, Home, PiggyBank } from 'lucide-react';
 import { useStore } from '../../../store/useStore';
-import { computeAllAccountBalances } from '../../../utils/ledger';
+import { computeAllAccountBalances, signedBalanceForNetWorth } from '../../../utils/ledger';
 import { formatCurrency } from '../../../utils/format';
 import type { AccountType } from '../../../types';
+import { LIABILITY_ACCOUNT_TYPES } from '../../../types';
 
 const ICONS: Record<AccountType, JSX.Element> = {
   bank: <Landmark size={15} className="text-primary-500" />,
   cash: <Wallet size={15} className="text-emerald-500" />,
   investment: <TrendingUp size={15} className="text-blue-500" />,
   credit_card: <CreditCard size={15} className="text-red-500" />,
+  mortgage: <Home size={15} className="text-red-500" />,
   other: <PiggyBank size={15} className="text-slate-400" />,
 };
 
@@ -18,7 +20,7 @@ export function AccountsBalanceWidget() {
   const transactions = useStore((s) => s.transactions);
 
   const balances = useMemo(() => computeAllAccountBalances(accounts, transactions), [accounts, transactions]);
-  const total = accounts.reduce((s, a) => s + (balances[a.id] ?? 0), 0);
+  const total = accounts.reduce((s, a) => s + signedBalanceForNetWorth(a, balances[a.id] ?? 0), 0);
 
   if (accounts.length === 0) {
     return <p className="text-sm text-slate-400 text-center py-6">Nessun conto. Aggiungine uno nella pagina Conti.</p>;
@@ -35,7 +37,11 @@ export function AccountsBalanceWidget() {
                 {ICONS[a.type]}
                 <span className="truncate">{a.name}</span>
               </span>
-              <span className={`text-sm font-semibold whitespace-nowrap ${bal >= 0 ? 'text-slate-700' : 'text-red-600'}`}>
+              <span
+                className={`text-sm font-semibold whitespace-nowrap ${
+                  LIABILITY_ACCOUNT_TYPES.includes(a.type) || bal < 0 ? 'text-red-600' : 'text-slate-700'
+                }`}
+              >
                 {formatCurrency(bal, a.currency)}
               </span>
             </li>
