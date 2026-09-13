@@ -17,12 +17,12 @@ const toneClasses: Record<string, string> = {
 
 export function StatCard({ label, value, icon, tone = 'default', sub }: StatCardProps) {
   return (
-    <div className="card flex flex-col gap-1 min-w-0">
+    <div className="card !p-3 flex flex-col gap-1 min-w-0">
       <div className="flex items-start justify-between gap-1 min-w-0">
-        <span className="text-xs font-medium uppercase tracking-wide text-slate-400 leading-tight">{label}</span>
+        <span className="text-xs sm:text-sm font-medium uppercase tracking-wide text-slate-400 leading-tight">{label}</span>
         {icon && <span className="shrink-0 mt-0.5">{icon}</span>}
       </div>
-      <span className={`text-lg sm:text-2xl font-semibold break-words ${toneClasses[tone]}`}>{value}</span>
+      <span className={`text-xl sm:text-3xl font-semibold break-words ${toneClasses[tone]}`}>{value}</span>
       {sub && <span className="text-xs text-slate-400 truncate">{sub}</span>}
     </div>
   );
