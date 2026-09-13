@@ -23,6 +23,16 @@ import { computeAllHoldings, round2 } from '../utils/ledger';
 import { simulateNewPrice } from '../utils/priceSimulation';
 import { fetchYahooQuote } from '../utils/marketData';
 
+// Campi modificabili in blocco su più movimenti selezionati: solo i campi presenti
+// vengono applicati (undefined = "non toccare"). categoryId viene ignorato sui
+// giroconti, che non hanno categoria.
+export interface BulkTransactionChanges {
+  accountId?: string;
+  categoryId?: string | null;
+  date?: string;
+  note?: string;
+}
+
 interface State {
   accounts: Account[];
   categories: Category[];
@@ -52,6 +62,7 @@ interface State {
   addTransaction: (t: Omit<Transaction, 'id' | 'createdAt'>) => void;
   addTransactions: (list: Omit<Transaction, 'id' | 'createdAt'>[]) => void;
   updateTransaction: (id: string, patch: Partial<Transaction>) => void;
+  updateTransactions: (ids: string[], changes: BulkTransactionChanges) => void;
   deleteTransaction: (id: string) => void;
   deleteTransactions: (ids: string[]) => void;
   toggleSelectTransaction: (id: string) => void;
@@ -164,6 +175,18 @@ export const useStore = create<State>()(
       updateTransaction: (id, patch) =>
         set((s) => ({
           transactions: s.transactions.map((t) => (t.id === id ? { ...t, ...patch } : t)),
+        })),
+      updateTransactions: (ids, changes) =>
+        set((s) => ({
+          transactions: s.transactions.map((t) => {
+            if (!ids.includes(t.id)) return t;
+            const patch: Partial<Transaction> = {};
+            if (changes.accountId !== undefined) patch.accountId = changes.accountId;
+            if (changes.categoryId !== undefined && t.type !== 'transfer') patch.categoryId = changes.categoryId;
+            if (changes.date !== undefined) patch.date = changes.date;
+            if (changes.note !== undefined) patch.note = changes.note;
+            return { ...t, ...patch };
+          }),
         })),
       deleteTransaction: (id) =>
         set((s) => ({

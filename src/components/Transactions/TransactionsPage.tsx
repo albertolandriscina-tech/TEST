@@ -5,6 +5,7 @@ import type { Transaction, TransactionType } from '../../types';
 import { formatCurrency, formatDate } from '../../utils/format';
 import { downloadTextFile, transactionsToCSV } from '../../utils/csv';
 import { TransactionForm } from './TransactionForm';
+import { TransactionBulkEditForm } from './TransactionBulkEditForm';
 import { ImportTransactionsModal } from './ImportTransactionsModal';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { CategoryBadge } from '../common/CategoryBadge';
@@ -30,6 +31,7 @@ export function TransactionsPage() {
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [deleting, setDeleting] = useState<Transaction | null>(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [bulkEditing, setBulkEditing] = useState(false);
   const [showImport, setShowImport] = useState(false);
 
   const [filterAccount, setFilterAccount] = useState('');
@@ -126,9 +128,12 @@ export function TransactionsPage() {
       {selectedIds.length > 0 && (
         <div className="card !py-2 flex items-center justify-between bg-primary-50 border-primary-200">
           <span className="text-sm text-primary-700 font-medium">{selectedIds.length} movimenti selezionati</span>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <button className="btn-secondary" onClick={clearSelection}>
               Deseleziona
+            </button>
+            <button className="btn-secondary" onClick={() => setBulkEditing(true)}>
+              <Pencil size={14} /> Modifica selezionati
             </button>
             <button className="btn-danger" onClick={() => setBulkDeleting(true)}>
               <Trash2 size={14} /> Elimina selezionati
@@ -272,6 +277,13 @@ export function TransactionsPage() {
             deleteTransaction(deleting.id);
             setDeleting(null);
           }}
+        />
+      )}
+      {bulkEditing && (
+        <TransactionBulkEditForm
+          ids={selectedIds}
+          transactions={transactions.filter((t) => selectedIds.includes(t.id))}
+          onClose={() => setBulkEditing(false)}
         />
       )}
       {bulkDeleting && (
