@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   Landmark,
   ArrowLeftRight,
+  PieChart,
   Tags,
   PiggyBank,
   TrendingUp,
@@ -21,6 +22,7 @@ import { ConfirmDialog } from '../common/ConfirmDialog';
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/movimenti', label: 'Movimenti', icon: ArrowLeftRight },
+  { to: '/analisi', label: 'Analisi', icon: PieChart },
   { to: '/conti', label: 'Conti', icon: Landmark },
   { to: '/categorie', label: 'Categorie', icon: Tags },
   { to: '/budget', label: 'Budget', icon: PiggyBank },

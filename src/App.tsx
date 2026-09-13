@@ -5,6 +5,7 @@ import { Sidebar } from './components/Layout/Sidebar';
 import { Dashboard } from './components/Dashboard/Dashboard';
 import { AccountsPage } from './components/Accounts/AccountsPage';
 import { TransactionsPage } from './components/Transactions/TransactionsPage';
+import { AnalysisPage } from './components/Analysis/AnalysisPage';
 import { CategoriesPage } from './components/Categories/CategoriesPage';
 import { BudgetsPage } from './components/Budgets/BudgetsPage';
 import { InvestmentsPage } from './components/Investments/InvestmentsPage';
@@ -56,6 +57,7 @@ export default function App() {
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/movimenti" element={<TransactionsPage />} />
+              <Route path="/analisi" element={<AnalysisPage />} />
               <Route path="/conti" element={<AccountsPage />} />
               <Route path="/categorie" element={<CategoriesPage />} />
               <Route path="/budget" element={<BudgetsPage />} />

@@ -1,6 +1,6 @@
-import { endOfMonth, format, isAfter, isBefore, parseISO, startOfMonth, subMonths, subYears } from 'date-fns';
-import type { Account, PatrimonioAsset, Transaction } from '../types';
-import { accountDelta, type InvestmentHolding } from './ledger';
+import { addDays, endOfMonth, format, isAfter, isBefore, parseISO, startOfMonth, subMonths, subYears } from 'date-fns';
+import type { Account, Category, PatrimonioAsset, Transaction } from '../types';
+import { accountDelta, getCategoryAndDescendantIds, type InvestmentHolding } from './ledger';
 import { MONTH_NAMES_SHORT_IT } from './format';
 
 export interface CashFlowBucket {
@@ -11,7 +11,7 @@ export interface CashFlowBucket {
   saldo: number;
 }
 
-function sumByType(transactions: Transaction[], type: 'income' | 'expense', from: Date, to: Date): number {
+export function sumByType(transactions: Transaction[], type: 'income' | 'expense', from: Date, to: Date): number {
   return transactions
     .filter((t) => t.type === type)
     .filter((t) => {
@@ -19,6 +19,79 @@ function sumByType(transactions: Transaction[], type: 'income' | 'expense', from
       return !isBefore(d, from) && !isAfter(d, to);
     })
     .reduce((s, t) => s + t.amount, 0);
+}
+
+/** Flusso di cassa giornaliero tra due date (per l'analisi in dettaglio di un singolo mese). */
+export function buildDailyCashFlow(transactions: Transaction[], fromISO: string, toISO: string): CashFlowBucket[] {
+  const from = parseISO(fromISO);
+  const to = parseISO(toISO);
+  const buckets: CashFlowBucket[] = [];
+  let cursor = from;
+  let guard = 0;
+  while (!isAfter(cursor, to) && guard < 366) {
+    const entrate = sumByType(transactions, 'income', cursor, cursor);
+    const uscite = sumByType(transactions, 'expense', cursor, cursor);
+    buckets.push({
+      key: format(cursor, 'yyyy-MM-dd'),
+      label: format(cursor, 'd'),
+      entrate,
+      uscite,
+      saldo: entrate - uscite,
+    });
+    cursor = addDays(cursor, 1);
+    guard++;
+  }
+  return buckets;
+}
+
+export interface CategoryBreakdownChild {
+  category: Category;
+  amount: number;
+  pct: number;
+}
+
+export interface CategoryBreakdownItem {
+  category: Category;
+  amount: number;
+  pct: number;
+  children: CategoryBreakdownChild[];
+}
+
+/**
+ * Scomposizione di entrate/uscite per categoria principale (con sottocategorie in
+ * dettaglio) in un intervallo di date, ordinata per importo decrescente.
+ */
+export function buildCategoryBreakdown(
+  transactions: Transaction[],
+  categories: Category[],
+  type: 'income' | 'expense',
+  fromISO: string,
+  toISO: string
+): CategoryBreakdownItem[] {
+  const filtered = transactions.filter((t) => t.type === type && t.date >= fromISO && t.date <= toISO);
+  const total = filtered.reduce((s, t) => s + t.amount, 0);
+
+  const roots = categories.filter((c) => c.kind === type && !c.parentId && !c.archived && !c.system);
+  return roots
+    .map((root) => {
+      const ids = getCategoryAndDescendantIds(root.id, categories);
+      const amount = filtered
+        .filter((t) => t.categoryId && ids.includes(t.categoryId))
+        .reduce((s, t) => s + t.amount, 0);
+      const children: CategoryBreakdownChild[] = categories
+        .filter((c) => c.parentId === root.id && !c.archived)
+        .map((child) => {
+          const childAmount = filtered
+            .filter((t) => t.categoryId === child.id)
+            .reduce((s, t) => s + t.amount, 0);
+          return { category: child, amount: childAmount, pct: total > 0 ? (childAmount / total) * 100 : 0 };
+        })
+        .filter((c) => c.amount > 0)
+        .sort((a, b) => b.amount - a.amount);
+      return { category: root, amount, pct: total > 0 ? (amount / total) * 100 : 0, children };
+    })
+    .filter((item) => item.amount > 0)
+    .sort((a, b) => b.amount - a.amount);
 }
 
 /** Flusso di cassa mensile per gli ultimi `count` mesi (incluso il mese corrente). */
