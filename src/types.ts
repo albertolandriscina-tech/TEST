@@ -156,6 +156,27 @@ export interface RecurringTransaction {
   note?: string;
 }
 
+// ---------- Dashboard personalizzabile ----------
+
+export type DashboardWidgetType =
+  | 'kpi'
+  | 'cashflow'
+  | 'networth-trend'
+  | 'budget'
+  | 'accounts-balance'
+  | 'category-breakdown'
+  | 'recent-transactions';
+
+export interface DashboardWidgetLayout {
+  i: string; // corrisponde a DashboardWidgetType
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  minW?: number;
+  minH?: number;
+}
+
 // ---------- Voce di ledger (partita doppia) ----------
 
 export interface LedgerEntry {

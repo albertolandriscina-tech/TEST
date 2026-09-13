@@ -4,6 +4,8 @@ import type {
   Account,
   Budget,
   Category,
+  DashboardWidgetLayout,
+  DashboardWidgetType,
   Investment,
   InvestmentTransaction,
   PatrimonioAsset,
@@ -13,6 +15,7 @@ import type {
 import { newId, todayISO } from '../utils/id';
 import { buildDefaultCategories, SYSTEM_CATEGORY_INVESTMENT_BUY, SYSTEM_CATEGORY_INVESTMENT_SELL } from './seed';
 import { buildDemoDataset } from './demoData';
+import { buildDefaultLayout } from '../dashboardWidgets';
 import { computeDueOccurrences, generateTransactionsForRule } from '../utils/recurring';
 
 interface State {
@@ -25,6 +28,8 @@ interface State {
   patrimonioAssets: PatrimonioAsset[];
   recurringTransactions: RecurringTransaction[];
   selectedTransactionIds: string[];
+  dashboardLayout: DashboardWidgetLayout[];
+  hiddenDashboardWidgets: DashboardWidgetType[];
 
   // Conti
   addAccount: (a: Omit<Account, 'id' | 'createdAt'>) => void;
@@ -70,6 +75,12 @@ interface State {
   ensureSystemCategories: () => { buyId: string; sellId: string };
   resetAllData: () => void;
   loadDemoData: () => void;
+
+  // Dashboard personalizzabile
+  setDashboardLayout: (layout: DashboardWidgetLayout[]) => void;
+  hideDashboardWidget: (type: DashboardWidgetType) => void;
+  showDashboardWidget: (type: DashboardWidgetType) => void;
+  resetDashboardLayout: () => void;
 }
 
 const demoDataset = buildDemoDataset();
@@ -86,6 +97,8 @@ export const useStore = create<State>()(
       patrimonioAssets: demoDataset.patrimonioAssets,
       recurringTransactions: demoDataset.recurringTransactions,
       selectedTransactionIds: [],
+      dashboardLayout: buildDefaultLayout(),
+      hiddenDashboardWidgets: [],
 
       addAccount: (a) =>
         set((s) => ({
@@ -299,8 +312,30 @@ export const useStore = create<State>()(
           patrimonioAssets: demo.patrimonioAssets,
           recurringTransactions: demo.recurringTransactions,
           selectedTransactionIds: [],
+          dashboardLayout: buildDefaultLayout(),
+          hiddenDashboardWidgets: [],
         });
       },
+
+      setDashboardLayout: (layout) => set({ dashboardLayout: layout }),
+      hideDashboardWidget: (type) =>
+        set((s) => ({
+          hiddenDashboardWidgets: s.hiddenDashboardWidgets.includes(type)
+            ? s.hiddenDashboardWidgets
+            : [...s.hiddenDashboardWidgets, type],
+        })),
+      showDashboardWidget: (type) =>
+        set((s) => {
+          const layoutHasWidget = s.dashboardLayout.some((l) => l.i === type);
+          const layout = layoutHasWidget
+            ? s.dashboardLayout
+            : [...s.dashboardLayout, buildDefaultLayout().find((l) => l.i === type)!];
+          return {
+            hiddenDashboardWidgets: s.hiddenDashboardWidgets.filter((t) => t !== type),
+            dashboardLayout: layout,
+          };
+        }),
+      resetDashboardLayout: () => set({ dashboardLayout: buildDefaultLayout(), hiddenDashboardWidgets: [] }),
     }),
     {
       name: 'finanza-personale-storage',
