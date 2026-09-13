@@ -259,6 +259,7 @@ export type DashboardWidgetType =
   | 'budget'
   | 'accounts-balance'
   | 'category-breakdown'
+  | 'expense-nature'
   | 'recent-transactions';
 
 export interface DashboardWidgetLayout {

@@ -11,6 +11,7 @@ import { NetWorthTrendWidget } from './widgets/NetWorthTrendWidget';
 import { BudgetWidget } from './widgets/BudgetWidget';
 import { AccountsBalanceWidget } from './widgets/AccountsBalanceWidget';
 import { CategoryBreakdownWidget } from './widgets/CategoryBreakdownWidget';
+import { ExpenseNatureWidget } from './widgets/ExpenseNatureWidget';
 import { RecentTransactionsWidget } from './widgets/RecentTransactionsWidget';
 
 const WIDGET_CONTENT: Record<DashboardWidgetType, () => JSX.Element> = {
@@ -20,6 +21,7 @@ const WIDGET_CONTENT: Record<DashboardWidgetType, () => JSX.Element> = {
   budget: BudgetWidget,
   'accounts-balance': AccountsBalanceWidget,
   'category-breakdown': CategoryBreakdownWidget,
+  'expense-nature': ExpenseNatureWidget,
   'recent-transactions': RecentTransactionsWidget,
 };
 

@@ -42,6 +42,11 @@ export const WIDGET_DEFINITIONS: Record<DashboardWidgetType, WidgetDefinition> =
     title: 'Ultimi movimenti',
     defaultLayout: { x: 5, y: 27, w: 7, h: 9, minW: 4, minH: 5 },
   },
+  'expense-nature': {
+    type: 'expense-nature',
+    title: 'Spese per natura (mese)',
+    defaultLayout: { x: 0, y: 36, w: 5, h: 9, minW: 3, minH: 5 },
+  },
 };
 
 export const DEFAULT_WIDGET_ORDER: DashboardWidgetType[] = [
@@ -52,6 +57,7 @@ export const DEFAULT_WIDGET_ORDER: DashboardWidgetType[] = [
   'budget',
   'category-breakdown',
   'recent-transactions',
+  'expense-nature',
 ];
 
 export function buildDefaultLayout(): DashboardWidgetLayout[] {
