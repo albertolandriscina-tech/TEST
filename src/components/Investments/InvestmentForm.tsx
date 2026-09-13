@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { Loader2, Search } from 'lucide-react';
 import type { Investment, InvestmentRegion, InvestmentSector, InvestmentType } from '../../types';
 import { INVESTMENT_REGION_LABELS, INVESTMENT_SECTOR_LABELS, INVESTMENT_TYPE_LABELS } from '../../types';
+import { fetchInstrumentInfo } from '../../utils/marketData';
 import { Modal } from '../common/Modal';
 
 interface InvestmentFormProps {
@@ -20,6 +22,26 @@ export function InvestmentForm({ initial, onSave, onClose }: InvestmentFormProps
   const [sector, setSector] = useState<InvestmentSector | ''>(initial?.sector ?? '');
   const [currency, setCurrency] = useState(initial?.currency ?? 'EUR');
   const [note, setNote] = useState(initial?.note ?? '');
+  const [lookupState, setLookupState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+  const [lookupMessage, setLookupMessage] = useState('');
+
+  const handleLookup = async () => {
+    if (!ticker.trim() || lookupState === 'loading') return;
+    setLookupState('loading');
+    setLookupMessage('');
+    const info = await fetchInstrumentInfo(ticker);
+    if (!info) {
+      setLookupState('error');
+      setLookupMessage('Nessun dato trovato per questo ticker.');
+      return;
+    }
+    if (info.name) setName(info.name);
+    if (info.currency) setCurrency(info.currency);
+    if (info.type) setType(info.type);
+    if (typeof info.price === 'number') setCurrentPrice(String(info.price));
+    setLookupState('done');
+    setLookupMessage(info.exchange ? `Trovato su ${info.exchange}.` : 'Dati trovati.');
+  };
 
   const submit = () => {
     if (!name.trim()) return;
@@ -57,7 +79,42 @@ export function InvestmentForm({ initial, onSave, onClose }: InvestmentFormProps
           </div>
           <div>
             <label className="label">Ticker/ISIN (opz.)</label>
-            <input className="input" value={ticker} onChange={(e) => setTicker(e.target.value)} />
+            <div className="flex gap-2">
+              <input
+                className="input flex-1"
+                value={ticker}
+                onChange={(e) => {
+                  setTicker(e.target.value);
+                  setLookupState('idle');
+                  setLookupMessage('');
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    void handleLookup();
+                  }
+                }}
+                placeholder="Es. AAPL, SWDA.MI"
+              />
+              <button
+                type="button"
+                className="btn-secondary !px-3 shrink-0"
+                title="Recupera nome, tipo, valuta e prezzo dal ticker"
+                disabled={!ticker.trim() || lookupState === 'loading'}
+                onClick={() => void handleLookup()}
+              >
+                {lookupState === 'loading' ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Search size={16} />
+                )}
+              </button>
+            </div>
+            {lookupMessage && (
+              <p className={`mt-1 text-xs ${lookupState === 'error' ? 'text-red-500' : 'text-slate-400'}`}>
+                {lookupMessage}
+              </p>
+            )}
           </div>
         </div>
         <div>
