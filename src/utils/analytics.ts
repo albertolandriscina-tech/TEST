@@ -1,8 +1,9 @@
-import { addDays, endOfMonth, format, isAfter, isBefore, parseISO, startOfMonth, subMonths, subYears } from 'date-fns';
+import { addDays, endOfMonth, endOfYear, format, isAfter, isBefore, parseISO, startOfMonth, subMonths, subYears } from 'date-fns';
 import type { Account, Category, ExpenseNature, PatrimonioAsset, Transaction } from '../types';
-import { LIQUIDITY_ACCOUNT_TYPES } from '../types';
+import { LIABILITY_ACCOUNT_TYPES, LIQUIDITY_ACCOUNT_TYPES } from '../types';
 import {
   accountDelta,
+  computeAccountBalance,
   getCategoryAndDescendantIds,
   getEffectiveCategoryNature,
   round2,
@@ -188,6 +189,79 @@ export function buildCustomRangeCashFlow(transactions: Transaction[], accounts: 
     guard++;
   }
   return buckets;
+}
+
+export interface CashFlowActivityBreakdown {
+  operativa: number;
+  investimenti: number;
+  finanziamenti: number;
+}
+
+/**
+ * Scompone il flusso di cassa (solo conti liquidi) tra le tre attività di un classico
+ * rendiconto finanziario: gestione operativa (entrate/uscite ordinarie), investimenti
+ * (versamenti/prelievi da/verso il conto titoli) e finanziamenti e capitale (pagamenti
+ * verso conti di debito come mutuo o carta di credito). I trasferimenti tra due conti
+ * liquidi (che non alterano la liquidità complessiva) non vengono conteggiati.
+ */
+export function computeCashFlowByActivity(
+  transactions: Transaction[],
+  accounts: Account[],
+  from: Date,
+  to: Date
+): CashFlowActivityBreakdown {
+  const liquidityIds = new Set(accounts.filter((a) => LIQUIDITY_ACCOUNT_TYPES.includes(a.type)).map((a) => a.id));
+  const accountById = new Map(accounts.map((a) => [a.id, a]));
+  let operativa = 0;
+  let investimenti = 0;
+  let finanziamenti = 0;
+
+  for (const t of transactions) {
+    const d = parseISO(t.date);
+    if (isBefore(d, from) || isAfter(d, to)) continue;
+
+    if (t.type === 'income' || t.type === 'expense') {
+      if (!liquidityIds.has(t.accountId)) continue;
+      const signed = t.type === 'income' ? t.amount : -t.amount;
+      if (t.investmentTxId) investimenti += signed;
+      else operativa += signed;
+      continue;
+    }
+
+    const fromLiquid = liquidityIds.has(t.accountId);
+    const toLiquid = t.toAccountId ? liquidityIds.has(t.toAccountId) : false;
+    if (fromLiquid === toLiquid) continue; // entrambi liquidi (o nessuno dei due): non cambia la liquidità totale
+
+    const counterpartId = fromLiquid ? t.toAccountId : t.accountId;
+    const counterpart = counterpartId ? accountById.get(counterpartId) : undefined;
+    const signed = fromLiquid ? -t.amount : t.amount;
+
+    if (counterpart?.type === 'investment') investimenti += signed;
+    else if (counterpart && LIABILITY_ACCOUNT_TYPES.includes(counterpart.type)) finanziamenti += signed;
+    else operativa += signed;
+  }
+
+  return { operativa: round2(operativa), investimenti: round2(investimenti), finanziamenti: round2(finanziamenti) };
+}
+
+function bucketEndDate(key: string): Date {
+  if (key.length === 4) return endOfYear(new Date(Number(key), 0, 1)); // 'yyyy'
+  if (key.length === 7) return endOfMonth(parseISO(`${key}-01`)); // 'yyyy-MM'
+  return parseISO(key); // 'yyyy-MM-dd'
+}
+
+/**
+ * Liquidità cumulata (somma dei saldi dei conti liquidi) alla fine di ciascun bucket di
+ * un flusso di cassa, ricostruita da tutti i movimenti storici fino a quella data — non
+ * solo quelli nell'intervallo mostrato, per riflettere il saldo reale.
+ */
+export function buildLiquidityTrend(transactions: Transaction[], accounts: Account[], buckets: CashFlowBucket[]): number[] {
+  const liquidAccounts = accounts.filter((a) => LIQUIDITY_ACCOUNT_TYPES.includes(a.type));
+  return buckets.map((b) => {
+    const cutoff = bucketEndDate(b.key);
+    const relevant = transactions.filter((t) => !isAfter(parseISO(t.date), cutoff));
+    return round2(liquidAccounts.reduce((s, a) => s + computeAccountBalance(a, relevant), 0));
+  });
 }
 
 export interface NatureBreakdownItem {

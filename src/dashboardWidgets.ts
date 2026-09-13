@@ -15,7 +15,7 @@ export const WIDGET_DEFINITIONS: Record<DashboardWidgetType, WidgetDefinition> =
   cashflow: {
     type: 'cashflow',
     title: 'Flusso di cassa',
-    defaultLayout: { x: 0, y: 8, w: 8, h: 10, minW: 4, minH: 6 },
+    defaultLayout: { x: 0, y: 8, w: 8, h: 14, minW: 6, minH: 9 },
   },
   'accounts-balance': {
     type: 'accounts-balance',
