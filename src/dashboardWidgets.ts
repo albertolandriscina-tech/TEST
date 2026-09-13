@@ -12,6 +12,11 @@ export const WIDGET_DEFINITIONS: Record<DashboardWidgetType, WidgetDefinition> =
     title: 'Riepilogo del mese',
     defaultLayout: { x: 0, y: 0, w: 12, h: 4, minW: 3, minH: 2 },
   },
+  'networth-breakdown': {
+    type: 'networth-breakdown',
+    title: 'Composizione del patrimonio',
+    defaultLayout: { x: 0, y: 4, w: 12, h: 4, minW: 3, minH: 2 },
+  },
   cashflow: {
     type: 'cashflow',
     title: 'Flusso di cassa',
@@ -51,6 +56,7 @@ export const WIDGET_DEFINITIONS: Record<DashboardWidgetType, WidgetDefinition> =
 
 export const DEFAULT_WIDGET_ORDER: DashboardWidgetType[] = [
   'kpi',
+  'networth-breakdown',
   'cashflow',
   'accounts-balance',
   'networth-trend',

@@ -6,6 +6,7 @@ import { WIDGET_DEFINITIONS, DEFAULT_WIDGET_ORDER } from '../../dashboardWidgets
 import { DashboardGrid } from './DashboardGrid';
 import { WidgetCard } from './WidgetCard';
 import { KpiWidget } from './widgets/KpiWidget';
+import { NetWorthBreakdownWidget } from './widgets/NetWorthBreakdownWidget';
 import { CashFlowWidget } from './widgets/CashFlowWidget';
 import { NetWorthTrendWidget } from './widgets/NetWorthTrendWidget';
 import { BudgetWidget } from './widgets/BudgetWidget';
@@ -16,6 +17,7 @@ import { RecentTransactionsWidget } from './widgets/RecentTransactionsWidget';
 
 const WIDGET_CONTENT: Record<DashboardWidgetType, () => JSX.Element> = {
   kpi: KpiWidget,
+  'networth-breakdown': NetWorthBreakdownWidget,
   cashflow: CashFlowWidget,
   'networth-trend': NetWorthTrendWidget,
   budget: BudgetWidget,

@@ -256,6 +256,7 @@ export type DashboardWidgetType =
   | 'kpi'
   | 'cashflow'
   | 'networth-trend'
+  | 'networth-breakdown'
   | 'budget'
   | 'accounts-balance'
   | 'category-breakdown'

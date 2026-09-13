@@ -19,7 +19,9 @@ export function StatCard({ label, value, icon, tone = 'default', sub }: StatCard
   return (
     <div className="card !p-2.5 flex flex-col gap-0.5 min-w-0">
       <div className="flex items-start justify-between gap-1 min-w-0">
-        <span className="text-xs sm:text-sm font-medium uppercase tracking-wide text-slate-400 leading-tight truncate">{label}</span>
+        <span className="text-xs sm:text-sm font-medium uppercase tracking-wide text-slate-400 leading-tight truncate" title={label}>
+          {label}
+        </span>
         {icon && <span className="shrink-0 mt-0.5">{icon}</span>}
       </div>
       <span className={`text-lg sm:text-xl font-semibold truncate ${toneClasses[tone]}`}>{value}</span>
