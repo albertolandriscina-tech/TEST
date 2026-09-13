@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { CheckCircle2, XCircle } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { ACCOUNT_TYPE_LABELS, ASSET_CATEGORY_LABELS, LIABILITY_ACCOUNT_TYPES } from '../../types';
-import { computeAllAccountBalances, computeAllHoldings, computeIncomeStatement, computeNetWorth, computeQuadratura } from '../../utils/ledger';
+import { computeAllAccountBalances, computeAllHoldings, computeIncomeStatement, computeNetWorth, computeQuadratura, round2 } from '../../utils/ledger';
 import { formatCurrency } from '../../utils/format';
 import { CategoryIconCircle } from '../common/CategoryBadge';
 
@@ -52,6 +52,23 @@ export function BalanceSheetPage() {
   const utile = risultato > 0 ? risultato : 0;
   const perdita = risultato < 0 ? -risultato : 0;
   const pareggio = Math.max(totaleCosti + utile, totaleRicavi + perdita);
+
+  // Utili (perdite) portati a nuovo: il risultato cumulato di tutti gli esercizi precedenti
+  // a quello selezionato, che va correttamente imputato nel Patrimonio Netto dello Stato
+  // Patrimoniale insieme al risultato dell'esercizio corrente.
+  const utiliPortatiANuovo = useMemo(
+    () =>
+      round2(
+        years
+          .filter((y) => y < year)
+          .reduce((s, y) => s + computeIncomeStatement(transactions, categories, y).risultato, 0)
+      ),
+    [years, year, transactions, categories]
+  );
+  // Componente residua del Patrimonio Netto non spiegata dal conto economico (capitale
+  // iniziale dei conti e plus/minusvalenze non realizzate su investimenti e patrimonio,
+  // che il Conto Economico non rileva finché non vengono effettivamente realizzate).
+  const altreComponentiPatrimonioNetto = round2(netWorth.patrimonioNetto - utiliPortatiANuovo - risultato);
 
   return (
     <div className="space-y-4">
@@ -228,6 +245,45 @@ export function BalanceSheetPage() {
       <div className="card bg-primary-50 border-primary-200 flex items-center justify-between flex-wrap gap-2">
         <span className="font-medium text-primary-700">Patrimonio Netto Totale</span>
         <span className="text-2xl font-bold text-primary-700">{formatCurrency(netWorth.patrimonioNetto)}</span>
+      </div>
+
+      <div className="card">
+        <h3 className="font-semibold text-slate-700 mb-2">Composizione del Patrimonio Netto</h3>
+        <div className="overflow-x-auto">
+          <table className="table-base">
+            <tbody>
+              <tr>
+                <td>Utili (perdite) portati a nuovo (esercizi precedenti al {year})</td>
+                <td className={`text-right font-medium ${utiliPortatiANuovo >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  {formatCurrency(utiliPortatiANuovo)}
+                </td>
+              </tr>
+              <tr>
+                <td>{risultato >= 0 ? `Utile d'esercizio ${year}` : `Perdita d'esercizio ${year}`}</td>
+                <td className={`text-right font-medium ${risultato >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  {formatCurrency(risultato)}
+                </td>
+              </tr>
+              <tr>
+                <td>Capitale iniziale e plus/minusvalenze non realizzate</td>
+                <td className="text-right font-medium">{formatCurrency(altreComponentiPatrimonioNetto)}</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr className="border-t-2 border-slate-200">
+                <td className="font-semibold text-slate-700">Patrimonio Netto Totale</td>
+                <td className="text-right font-bold text-slate-800">{formatCurrency(netWorth.patrimonioNetto)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <p className="text-xs text-slate-400 mt-2">
+          Il risultato di ogni esercizio, una volta chiuso, confluisce negli "utili portati a nuovo": per questo
+          l'utile dell'esercizio precedente non compare più come risultato corrente, ma resta correttamente
+          imputato nel Patrimonio Netto. Plus/minusvalenze non realizzate su investimenti e beni patrimoniali (il
+          cui valore di mercato può variare) non sono componenti di reddito del Conto Economico finché non vengono
+          effettivamente realizzate.
+        </p>
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
