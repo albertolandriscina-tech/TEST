@@ -1,13 +1,13 @@
 import type { Investment, InvestmentType } from '../types';
 
 /**
- * Questa applicazione è client-only (nessun backend) e gira anche in sandbox
- * statiche che bloccano le chiamate di rete verso API di mercato esterne: un
- * vero fetch di quotazioni real-time non è quindi affidabile in ogni contesto
- * di esecuzione. L'aggiornamento automatico simula un movimento di prezzo
- * realistico (random walk) calibrato sulla volatilità tipica di ogni
- * categoria di strumento, così da poter comunque testare ed usare la
- * funzionalità end-to-end senza dipendere da chiavi API o servizi terzi.
+ * Fallback usato quando il recupero della quotazione reale (Yahoo Finance,
+ * vedi marketData.ts) non è disponibile per uno strumento — perché non ha un
+ * ticker impostato, o perché la richiesta di rete fallisce (CORS, assenza di
+ * connessione, sandbox senza accesso a internet). Simula un movimento di
+ * prezzo realistico (random walk) calibrato sulla volatilità tipica di ogni
+ * categoria di strumento, così l'aggiornamento quotazioni resta sempre
+ * utilizzabile anche quando la fonte reale non è raggiungibile.
  */
 const DAILY_VOLATILITY: Record<InvestmentType, number> = {
   bond: 0.0025,

@@ -91,8 +91,26 @@ export function buildDemoDataset(): DemoDataset {
 
   // ---- Investimenti: versamenti periodici + acquisti a rate (PAC) ----
   const investmentTransactions: InvestmentTransaction[] = [];
-  const etf: Investment = { id: newId(), name: 'ETF Azionario Globale', ticker: 'SWDA', type: 'etf', currentPrice: 98 };
-  const azione: Investment = { id: newId(), name: 'Azione Generali', ticker: 'G.MI', type: 'stock', currentPrice: 33 };
+  const etf: Investment = {
+    id: newId(),
+    name: 'ETF Azionario Globale',
+    ticker: 'SWDA.MI',
+    type: 'etf',
+    currentPrice: 98,
+    region: 'globale',
+    sector: 'diversificato',
+    currency: 'EUR',
+  };
+  const azione: Investment = {
+    id: newId(),
+    name: 'Azione Generali',
+    ticker: 'G.MI',
+    type: 'stock',
+    currentPrice: 33,
+    region: 'europa',
+    sector: 'finanziario',
+    currency: 'EUR',
+  };
   const investments = [etf, azione];
 
   const buyOperation = (

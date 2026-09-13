@@ -155,6 +155,11 @@ function hashString(s: string): number {
   return h;
 }
 
+/** Colore deterministico (stabile) per una qualsiasi chiave testuale, es. una valuta. */
+export function colorForKey(key: string): string {
+  return CATEGORY_COLOR_PALETTE[hashString(key) % CATEGORY_COLOR_PALETTE.length];
+}
+
 /** Colore assegnato alla categoria, oppure uno deterministico (stabile) se non impostato. */
 export function getCategoryColor(category: Pick<Category, 'id' | 'color'> | null | undefined): string {
   if (!category) return CATEGORY_COLOR_PALETTE[0];

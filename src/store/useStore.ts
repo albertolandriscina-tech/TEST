@@ -19,7 +19,8 @@ import { buildDemoDataset } from './demoData';
 import { buildDefaultLayout } from '../dashboardWidgets';
 import { computeDueOccurrences, generateTransactionsForRule } from '../utils/recurring';
 import { computeAllHoldings, round2 } from '../utils/ledger';
-import { refreshPrices } from '../utils/priceSimulation';
+import { simulateNewPrice } from '../utils/priceSimulation';
+import { fetchYahooQuote } from '../utils/marketData';
 
 interface State {
   accounts: Account[];
@@ -65,7 +66,7 @@ interface State {
   deleteInvestment: (id: string) => void;
   addInvestmentTransaction: (op: Omit<InvestmentTransaction, 'id' | 'createdAt'>) => void;
   deleteInvestmentTransaction: (id: string) => void;
-  refreshInvestmentPrices: () => void;
+  refreshInvestmentPrices: () => Promise<void>;
 
   // Patrimonio
   addAsset: (a: Omit<PatrimonioAsset, 'id'>) => void;
@@ -276,12 +277,37 @@ export const useStore = create<State>()(
           transactions: s.transactions.filter((t) => t.investmentTxId !== id),
         })),
 
-      refreshInvestmentPrices: () =>
+      refreshInvestmentPrices: async () => {
+        const active = get().investments.filter((i) => !i.archived);
+        const now = new Date().toISOString();
+
+        const updates = await Promise.all(
+          active.map(async (inv) => {
+            const live = inv.ticker ? await fetchYahooQuote(inv.ticker) : null;
+            if (live) {
+              return {
+                id: inv.id,
+                currentPrice: live.price,
+                lastUpdated: now,
+                quoteSource: 'live' as const,
+                currency: live.currency ?? inv.currency,
+              };
+            }
+            return {
+              id: inv.id,
+              currentPrice: simulateNewPrice(inv),
+              lastUpdated: now,
+              quoteSource: 'simulated' as const,
+            };
+          })
+        );
+
         set((s) => {
-          const active = s.investments.filter((i) => !i.archived);
-          const updated = refreshPrices(active);
-          const updatedMap = new Map(updated.map((u) => [u.id, u]));
-          const investments = s.investments.map((i) => updatedMap.get(i.id) ?? i);
+          const updatedMap = new Map(updates.map((u) => [u.id, u]));
+          const investments = s.investments.map((i) => {
+            const u = updatedMap.get(i.id);
+            return u ? { ...i, ...u } : i;
+          });
 
           const holdings = computeAllHoldings(
             investments.filter((i) => !i.archived),
@@ -299,7 +325,8 @@ export const useStore = create<State>()(
               : [...s.portfolioSnapshots, { id: newId(), date: today, totalValue, totalCost }];
 
           return { investments, portfolioSnapshots };
-        }),
+        });
+      },
 
       addAsset: (a) => set((s) => ({ patrimonioAssets: [...s.patrimonioAssets, { ...a, id: newId() }] })),
       updateAsset: (id, patch) =>

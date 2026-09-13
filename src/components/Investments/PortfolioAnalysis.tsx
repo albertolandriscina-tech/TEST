@@ -13,9 +13,10 @@ import {
   YAxis,
 } from 'recharts';
 import type { InvestmentHolding } from '../../utils/ledger';
-import type { InvestmentType, PortfolioSnapshot } from '../../types';
-import { INVESTMENT_TYPE_LABELS } from '../../types';
+import type { InvestmentRegion, InvestmentSector, InvestmentType, PortfolioSnapshot } from '../../types';
+import { INVESTMENT_REGION_LABELS, INVESTMENT_SECTOR_LABELS, INVESTMENT_TYPE_LABELS } from '../../types';
 import { formatCurrency, formatDate, formatNumber } from '../../utils/format';
+import { colorForKey } from '../../utils/categoryStyle';
 
 const TYPE_COLORS: Record<InvestmentType, string> = {
   etf: '#6366f1',
@@ -23,6 +24,82 @@ const TYPE_COLORS: Record<InvestmentType, string> = {
   stock: '#f59e0b',
   bond: '#14b8a6',
 };
+
+const REGION_COLORS: Record<InvestmentRegion, string> = {
+  italia: '#10b981',
+  europa: '#6366f1',
+  nord_america: '#f59e0b',
+  mercati_emergenti: '#ef4444',
+  asia_pacifico: '#0ea5e9',
+  globale: '#8b5cf6',
+  altro: '#94a3b8',
+};
+
+const SECTOR_COLORS: Record<InvestmentSector, string> = {
+  tecnologia: '#6366f1',
+  finanziario: '#0ea5e9',
+  sanita: '#ef4444',
+  energia: '#f59e0b',
+  industriale: '#84cc16',
+  consumo_discrezionale: '#ec4899',
+  consumo_base: '#14b8a6',
+  utilities: '#f97316',
+  immobiliare: '#8b5cf6',
+  materie_prime: '#eab308',
+  diversificato: '#06b6d4',
+  altro: '#94a3b8',
+};
+
+const UNSPECIFIED_COLOR = '#94a3b8';
+
+interface DistItem {
+  key: string;
+  label: string;
+  value: number;
+  pct: number;
+  color: string;
+}
+
+function DistributionCard({ title, items }: { title: string; items: DistItem[] }) {
+  if (items.length === 0) {
+    return (
+      <div className="card">
+        <h3 className="text-sm font-semibold text-slate-700 mb-2">{title}</h3>
+        <p className="text-sm text-slate-400 text-center py-10">Nessun dato disponibile.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="card">
+      <h3 className="text-sm font-semibold text-slate-700 mb-2">{title}</h3>
+      <div className="h-48">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie data={items} dataKey="value" nameKey="label" innerRadius="50%" outerRadius="80%" paddingAngle={2}>
+              {items.map((d) => (
+                <Cell key={d.key} fill={d.color} />
+              ))}
+            </Pie>
+            <Tooltip formatter={(v: number) => formatCurrency(v)} />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+      <ul className="mt-2 space-y-1.5">
+        {items.map((d) => (
+          <li key={d.key} className="flex items-center justify-between gap-2 text-xs">
+            <span className="flex items-center gap-1.5 min-w-0 text-slate-600">
+              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
+              <span className="truncate">{d.label}</span>
+            </span>
+            <span className="shrink-0 text-slate-500">
+              {formatCurrency(d.value)} <span className="text-slate-400">({formatNumber(d.pct, 0)}%)</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 interface Props {
   holdings: InvestmentHolding[];
@@ -39,6 +116,57 @@ export function PortfolioAnalysis({ holdings, snapshots }: Props) {
     }
     return Array.from(map.entries())
       .map(([type, value]) => ({ type, value, pct: totalValue > 0 ? (value / totalValue) * 100 : 0 }))
+      .sort((a, b) => b.value - a.value);
+  }, [holdings, totalValue]);
+
+  const byRegion = useMemo<DistItem[]>(() => {
+    const map = new Map<string, number>();
+    for (const h of holdings) {
+      const key = h.investment.region ?? 'non_specificata';
+      map.set(key, (map.get(key) ?? 0) + h.currentValue);
+    }
+    return Array.from(map.entries())
+      .map(([key, value]) => ({
+        key,
+        label: key === 'non_specificata' ? 'Non specificata' : INVESTMENT_REGION_LABELS[key as InvestmentRegion],
+        value,
+        pct: totalValue > 0 ? (value / totalValue) * 100 : 0,
+        color: key === 'non_specificata' ? UNSPECIFIED_COLOR : REGION_COLORS[key as InvestmentRegion],
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [holdings, totalValue]);
+
+  const bySector = useMemo<DistItem[]>(() => {
+    const map = new Map<string, number>();
+    for (const h of holdings) {
+      const key = h.investment.sector ?? 'non_specificato';
+      map.set(key, (map.get(key) ?? 0) + h.currentValue);
+    }
+    return Array.from(map.entries())
+      .map(([key, value]) => ({
+        key,
+        label: key === 'non_specificato' ? 'Non specificato' : INVESTMENT_SECTOR_LABELS[key as InvestmentSector],
+        value,
+        pct: totalValue > 0 ? (value / totalValue) * 100 : 0,
+        color: key === 'non_specificato' ? UNSPECIFIED_COLOR : SECTOR_COLORS[key as InvestmentSector],
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [holdings, totalValue]);
+
+  const byCurrency = useMemo<DistItem[]>(() => {
+    const map = new Map<string, number>();
+    for (const h of holdings) {
+      const key = (h.investment.currency || 'EUR').toUpperCase();
+      map.set(key, (map.get(key) ?? 0) + h.currentValue);
+    }
+    return Array.from(map.entries())
+      .map(([key, value]) => ({
+        key,
+        label: key,
+        value,
+        pct: totalValue > 0 ? (value / totalValue) * 100 : 0,
+        color: colorForKey(key),
+      }))
       .sort((a, b) => b.value - a.value);
   }, [holdings, totalValue]);
 
@@ -172,6 +300,12 @@ export function PortfolioAnalysis({ holdings, snapshots }: Props) {
             )}
           </div>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <DistributionCard title="Distribuzione geografica" items={byRegion} />
+        <DistributionCard title="Distribuzione valutaria" items={byCurrency} />
+        <DistributionCard title="Distribuzione settoriale" items={bySector} />
       </div>
 
       <div>

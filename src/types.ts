@@ -86,6 +86,56 @@ export const INVESTMENT_TYPE_LABELS: Record<InvestmentType, string> = {
   bond: 'Obbligazione',
 };
 
+export type InvestmentRegion =
+  | 'italia'
+  | 'europa'
+  | 'nord_america'
+  | 'mercati_emergenti'
+  | 'asia_pacifico'
+  | 'globale'
+  | 'altro';
+
+export const INVESTMENT_REGION_LABELS: Record<InvestmentRegion, string> = {
+  italia: 'Italia',
+  europa: 'Europa',
+  nord_america: 'Nord America',
+  mercati_emergenti: 'Mercati emergenti',
+  asia_pacifico: 'Asia-Pacifico',
+  globale: 'Globale / diversificato',
+  altro: 'Altro',
+};
+
+export type InvestmentSector =
+  | 'tecnologia'
+  | 'finanziario'
+  | 'sanita'
+  | 'energia'
+  | 'industriale'
+  | 'consumo_discrezionale'
+  | 'consumo_base'
+  | 'utilities'
+  | 'immobiliare'
+  | 'materie_prime'
+  | 'diversificato'
+  | 'altro';
+
+export const INVESTMENT_SECTOR_LABELS: Record<InvestmentSector, string> = {
+  tecnologia: 'Tecnologia',
+  finanziario: 'Finanziario',
+  sanita: 'Sanità',
+  energia: 'Energia',
+  industriale: 'Industriale',
+  consumo_discrezionale: 'Consumo discrezionale',
+  consumo_base: 'Consumo di base',
+  utilities: 'Utilities',
+  immobiliare: 'Immobiliare',
+  materie_prime: 'Materie prime',
+  diversificato: 'Diversificato / multi-settore',
+  altro: 'Altro',
+};
+
+export type QuoteSource = 'live' | 'simulated';
+
 export interface Investment {
   id: string;
   name: string;
@@ -94,7 +144,11 @@ export interface Investment {
   currentPrice: number;
   note?: string;
   archived?: boolean;
-  lastUpdated?: string; // ISO datetime dell'ultimo aggiornamento quotazione (manuale o simulato)
+  lastUpdated?: string; // ISO datetime dell'ultimo aggiornamento quotazione (manuale, live o simulato)
+  quoteSource?: QuoteSource; // origine dell'ultimo aggiornamento automatico
+  region?: InvestmentRegion;
+  sector?: InvestmentSector;
+  currency?: string; // codice ISO (es. EUR, USD); default EUR se non specificata
 }
 
 // ---------- Storico valore di portafoglio (per l'analisi degli investimenti) ----------

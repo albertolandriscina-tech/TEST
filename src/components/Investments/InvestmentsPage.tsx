@@ -11,6 +11,20 @@ import { PortfolioAnalysis } from './PortfolioAnalysis';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { Modal } from '../common/Modal';
 
+function QuoteSourceBadge({ investment }: { investment: Investment }) {
+  if (!investment.lastUpdated) return null;
+  return (
+    <div className="text-[10px] text-slate-400 mt-0.5">
+      {formatDateTime(investment.lastUpdated)}
+      {investment.quoteSource && (
+        <span className={`ml-1 font-medium ${investment.quoteSource === 'live' ? 'text-emerald-600' : 'text-amber-600'}`}>
+          {investment.quoteSource === 'live' ? '· Live' : '· Simulato'}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export function InvestmentsPage() {
   const investments = useStore((s) => s.investments);
   const investmentTransactions = useStore((s) => s.investmentTransactions);
@@ -47,10 +61,13 @@ export function InvestmentsPage() {
     .sort()
     .pop();
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setRefreshing(true);
-    refreshInvestmentPrices();
-    window.setTimeout(() => setRefreshing(false), 500);
+    try {
+      await refreshInvestmentPrices();
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   return (
@@ -71,10 +88,13 @@ export function InvestmentsPage() {
       </div>
 
       <div className="card bg-indigo-50 border-indigo-100 text-indigo-700 text-xs sm:text-sm">
-        L'aggiornamento delle quotazioni è <strong>simulato</strong>: applica un movimento di prezzo realistico
-        (random walk calibrato sulla volatilità tipica di ogni tipologia di strumento), utile per testare
-        l'app senza dipendere da API di mercato esterne o chiavi a pagamento. Puoi comunque impostare in
-        qualsiasi momento un prezzo manuale nelle tabelle qui sotto.
+        "Aggiorna quotazioni" tenta di recuperare il prezzo reale da <strong>Yahoo Finance</strong> per gli
+        strumenti con un ticker Yahoo valido (es. <code>AAPL</code>, <code>G.MI</code>, <code>SWDA.MI</code>).
+        Se la richiesta non è disponibile — assenza di ticker, di connessione, o restrizioni CORS/di rete
+        del browser o dell'hosting, come nell'anteprima di questo Artifact — il prezzo viene aggiornato con
+        una simulazione realistica di fallback. Ogni strumento mostra l'origine dell'ultimo aggiornamento
+        (<span className="font-medium">Live</span> / <span className="font-medium">Simulato</span>). Puoi
+        comunque impostare in qualsiasi momento un prezzo manuale.
         {lastUpdated && (
           <div className="mt-1 text-indigo-500">Ultimo aggiornamento: {formatDateTime(lastUpdated)}</div>
         )}
@@ -176,9 +196,7 @@ export function InvestmentsPage() {
                   value={investment.currentPrice}
                   onChange={(e) => updateInvestment(investment.id, { currentPrice: Number(e.target.value) || 0 })}
                 />
-                {investment.lastUpdated && (
-                  <div className="text-[10px] text-slate-400 mt-0.5">{formatDateTime(investment.lastUpdated)}</div>
-                )}
+                <QuoteSourceBadge investment={investment} />
               </div>
               <div>
                 <div className="text-xs text-slate-400">Valore</div>
@@ -225,9 +243,7 @@ export function InvestmentsPage() {
                     value={investment.currentPrice}
                     onChange={(e) => updateInvestment(investment.id, { currentPrice: Number(e.target.value) || 0 })}
                   />
-                  {investment.lastUpdated && (
-                    <div className="text-[10px] text-slate-400 mt-0.5">{formatDateTime(investment.lastUpdated)}</div>
-                  )}
+                  <QuoteSourceBadge investment={investment} />
                 </td>
                 <td className="text-right font-medium">{formatCurrency(currentValue)}</td>
                 <td className={`text-right font-medium ${gainLoss >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
