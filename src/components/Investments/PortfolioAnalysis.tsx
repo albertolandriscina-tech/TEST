@@ -17,6 +17,8 @@ import type { InvestmentRegion, InvestmentSector, InvestmentType, PortfolioSnaps
 import { INVESTMENT_REGION_LABELS, INVESTMENT_SECTOR_LABELS, INVESTMENT_TYPE_LABELS } from '../../types';
 import { formatCurrency, formatDate, formatNumber } from '../../utils/format';
 import { colorForKey } from '../../utils/categoryStyle';
+import { getAccentColor } from '../../utils/theme';
+import { useStore } from '../../store/useStore';
 
 const TYPE_COLORS: Record<InvestmentType, string> = {
   etf: '#6366f1',
@@ -107,6 +109,7 @@ interface Props {
 }
 
 export function PortfolioAnalysis({ holdings, snapshots }: Props) {
+  const accent = getAccentColor(useStore((s) => s.settings.colorTheme));
   const totalValue = holdings.reduce((s, h) => s + h.currentValue, 0);
 
   const allocationByType = useMemo(() => {
@@ -274,8 +277,8 @@ export function PortfolioAnalysis({ holdings, snapshots }: Props) {
                 <AreaChart data={trend} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
                   <defs>
                     <linearGradient id="portfolioValueFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.35} />
-                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                      <stop offset="5%" stopColor={accent} stopOpacity={0.35} />
+                      <stop offset="95%" stopColor={accent} stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -287,7 +290,7 @@ export function PortfolioAnalysis({ holdings, snapshots }: Props) {
                     type="monotone"
                     dataKey="totalValue"
                     name="Valore di mercato"
-                    stroke="#6366f1"
+                    stroke={accent}
                     strokeWidth={2}
                     fill="url(#portfolioValueFill)"
                   />

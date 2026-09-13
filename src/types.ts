@@ -242,6 +242,66 @@ export interface DashboardWidgetLayout {
   minH?: number;
 }
 
+// ---------- Impostazioni applicazione ----------
+
+export type AppTheme = 'light' | 'dark' | 'system';
+
+export const APP_THEME_LABELS: Record<AppTheme, string> = {
+  light: 'Chiaro',
+  dark: 'Scuro',
+  system: 'Automatico (sistema)',
+};
+
+export type ColorTheme = 'indigo' | 'blue' | 'green' | 'violet' | 'rose' | 'amber';
+
+export const COLOR_THEME_LABELS: Record<ColorTheme, string> = {
+  indigo: 'Indaco',
+  blue: 'Blu',
+  green: 'Verde',
+  violet: 'Viola',
+  rose: 'Rosa',
+  amber: 'Ambra',
+};
+
+export type FontFamily = 'system' | 'serif' | 'alt' | 'mono';
+
+export const FONT_FAMILY_LABELS: Record<FontFamily, string> = {
+  system: 'Predefinito',
+  serif: 'Classico (serif)',
+  alt: 'Alternativo',
+  mono: 'Monospazio',
+};
+
+export interface AppSettings {
+  theme: AppTheme;
+  colorTheme: ColorTheme;
+  fontFamily: FontFamily;
+  currency: string; // codice ISO 4217, es. EUR
+}
+
+export const DEFAULT_SETTINGS: AppSettings = {
+  theme: 'system',
+  colorTheme: 'indigo',
+  fontFamily: 'system',
+  currency: 'EUR',
+};
+
+export interface CurrencyOption {
+  code: string;
+  label: string;
+  symbol: string;
+}
+
+export const CURRENCY_OPTIONS: CurrencyOption[] = [
+  { code: 'EUR', label: 'Euro', symbol: '€' },
+  { code: 'USD', label: 'Dollaro USA', symbol: '$' },
+  { code: 'GBP', label: 'Sterlina britannica', symbol: '£' },
+  { code: 'CHF', label: 'Franco svizzero', symbol: 'CHF' },
+  { code: 'JPY', label: 'Yen giapponese', symbol: '¥' },
+  { code: 'CAD', label: 'Dollaro canadese', symbol: 'CA$' },
+  { code: 'AUD', label: 'Dollaro australiano', symbol: 'A$' },
+];
+
 // ---------- Voce di ledger (partita doppia) ----------
 
 export interface LedgerEntry {

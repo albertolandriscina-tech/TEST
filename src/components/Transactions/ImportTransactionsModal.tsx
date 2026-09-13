@@ -211,7 +211,7 @@ export function ImportTransactionsModal({ onClose }: Props) {
             Importa un file CSV esportato da questa app o da un altro programma (es. estratto conto bancario). Le colonne
             verranno riconosciute automaticamente e potrai correggerle nel passaggio successivo.
           </p>
-          <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-xl py-10 cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/40 transition-colors">
+          <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-xl py-10 cursor-pointer hover:border-primary-400 hover:bg-primary-50/40 transition-colors">
             <Upload size={28} className="text-slate-400" />
             <span className="text-sm text-slate-500">Clicca per selezionare un file .csv</span>
             <input
@@ -310,12 +310,12 @@ export function ImportTransactionsModal({ onClose }: Props) {
                 <span className="badge bg-emerald-50 text-emerald-700">{validCount} righe valide</span>
                 {errorCount > 0 && <span className="badge bg-red-50 text-red-600">{errorCount} righe con errori (verranno ignorate)</span>}
                 {plan.accountsToCreate.length > 0 && (
-                  <span className="badge bg-indigo-50 text-indigo-600">
+                  <span className="badge bg-primary-50 text-primary-600">
                     {plan.accountsToCreate.length} nuovi conti: {plan.accountsToCreate.join(', ')}
                   </span>
                 )}
                 {plan.categoriesToCreate.length > 0 && (
-                  <span className="badge bg-indigo-50 text-indigo-600">
+                  <span className="badge bg-primary-50 text-primary-600">
                     {plan.categoriesToCreate.length} nuove categorie:{' '}
                     {plan.categoriesToCreate.map((c) => (c.path.child ? `${c.path.root} > ${c.path.child}` : c.path.root)).join(', ')}
                   </span>

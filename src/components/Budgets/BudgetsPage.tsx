@@ -313,13 +313,13 @@ export function BudgetsPage() {
         <div className="flex gap-2">
           <div className="flex rounded-lg overflow-hidden border border-slate-200">
             <button
-              className={`px-3 py-1.5 text-sm font-medium ${view === 'monthly' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600'}`}
+              className={`px-3 py-1.5 text-sm font-medium ${view === 'monthly' ? 'bg-primary-600 text-white' : 'bg-white text-slate-600'}`}
               onClick={() => setView('monthly')}
             >
               Mensile
             </button>
             <button
-              className={`px-3 py-1.5 text-sm font-medium ${view === 'annual' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600'}`}
+              className={`px-3 py-1.5 text-sm font-medium ${view === 'annual' ? 'bg-primary-600 text-white' : 'bg-white text-slate-600'}`}
               onClick={() => setView('annual')}
             >
               Annuale

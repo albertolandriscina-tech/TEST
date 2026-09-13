@@ -87,7 +87,7 @@ export function InvestmentsPage() {
         </div>
       </div>
 
-      <div className="card bg-indigo-50 border-indigo-100 text-indigo-700 text-xs sm:text-sm">
+      <div className="card bg-primary-50 border-primary-100 text-primary-700 text-xs sm:text-sm">
         "Aggiorna quotazioni" tenta di recuperare il prezzo reale da <strong>Yahoo Finance</strong> per gli
         strumenti con un ticker Yahoo valido (es. <code>AAPL</code>, <code>G.MI</code>, <code>SWDA.MI</code>).
         Se la richiesta non è disponibile — assenza di ticker, di connessione, o restrizioni CORS/di rete
@@ -96,7 +96,7 @@ export function InvestmentsPage() {
         (<span className="font-medium">Live</span> / <span className="font-medium">Simulato</span>). Puoi
         comunque impostare in qualsiasi momento un prezzo manuale.
         {lastUpdated && (
-          <div className="mt-1 text-indigo-500">Ultimo aggiornamento: {formatDateTime(lastUpdated)}</div>
+          <div className="mt-1 text-primary-500">Ultimo aggiornamento: {formatDateTime(lastUpdated)}</div>
         )}
       </div>
 
@@ -127,7 +127,7 @@ export function InvestmentsPage() {
       <div className="flex gap-1 border-b border-slate-200">
         <button
           className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
-            tab === 'portafoglio' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'
+            tab === 'portafoglio' ? 'border-primary-500 text-primary-600' : 'border-transparent text-slate-500 hover:text-slate-700'
           }`}
           onClick={() => setTab('portafoglio')}
         >
@@ -135,7 +135,7 @@ export function InvestmentsPage() {
         </button>
         <button
           className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
-            tab === 'analisi' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'
+            tab === 'analisi' ? 'border-primary-500 text-primary-600' : 'border-transparent text-slate-500 hover:text-slate-700'
           }`}
           onClick={() => setTab('analisi')}
         >

@@ -12,7 +12,7 @@ const toneClasses: Record<string, string> = {
   default: 'text-slate-800',
   positive: 'text-emerald-600',
   negative: 'text-red-600',
-  accent: 'text-indigo-600',
+  accent: 'text-primary-600',
 };
 
 export function StatCard({ label, value, icon, tone = 'default', sub }: StatCardProps) {

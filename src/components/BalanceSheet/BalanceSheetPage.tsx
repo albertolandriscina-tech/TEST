@@ -225,9 +225,9 @@ export function BalanceSheetPage() {
         </div>
       </div>
 
-      <div className="card bg-indigo-50 border-indigo-200 flex items-center justify-between flex-wrap gap-2">
-        <span className="font-medium text-indigo-700">Patrimonio Netto Totale</span>
-        <span className="text-2xl font-bold text-indigo-700">{formatCurrency(netWorth.patrimonioNetto)}</span>
+      <div className="card bg-primary-50 border-primary-200 flex items-center justify-between flex-wrap gap-2">
+        <span className="font-medium text-primary-700">Patrimonio Netto Totale</span>
+        <span className="text-2xl font-bold text-primary-700">{formatCurrency(netWorth.patrimonioNetto)}</span>
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">

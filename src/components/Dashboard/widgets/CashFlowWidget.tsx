@@ -3,6 +3,7 @@ import { Bar, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, 
 import { useStore } from '../../../store/useStore';
 import { buildCustomRangeCashFlow, buildMonthlyCashFlow, buildYearlyCashFlow } from '../../../utils/analytics';
 import { formatCurrency } from '../../../utils/format';
+import { getAccentColor } from '../../../utils/theme';
 
 type Period = 'month' | 'year' | 'custom';
 
@@ -12,6 +13,7 @@ function monthInputValue(d: Date): string {
 
 export function CashFlowWidget() {
   const transactions = useStore((s) => s.transactions);
+  const accent = getAccentColor(useStore((s) => s.settings.colorTheme));
   const [period, setPeriod] = useState<Period>('month');
 
   const now = new Date();
@@ -37,7 +39,7 @@ export function CashFlowWidget() {
             <button
               key={p}
               onClick={() => setPeriod(p)}
-              className={`px-2.5 py-1 font-medium ${period === p ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+              className={`px-2.5 py-1 font-medium ${period === p ? 'bg-primary-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
             >
               {p === 'month' ? 'Mensile' : p === 'year' ? 'Annuale' : 'Personalizzato'}
             </button>
@@ -91,7 +93,7 @@ export function CashFlowWidget() {
               <Tooltip formatter={(v: number) => formatCurrency(v)} />
               <Bar dataKey="entrate" name="Entrate" fill="#10b981" radius={[4, 4, 0, 0]} />
               <Bar dataKey="uscite" name="Uscite" fill="#ef4444" radius={[4, 4, 0, 0]} />
-              <Line type="monotone" dataKey="saldo" name="Saldo netto" stroke="#6366f1" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="saldo" name="Saldo netto" stroke={accent} strokeWidth={2} dot={false} />
             </ComposedChart>
           </ResponsiveContainer>
         )}

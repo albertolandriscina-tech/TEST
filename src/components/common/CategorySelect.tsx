@@ -69,7 +69,7 @@ export function CategorySelect({ categories, kind, value, onChange, className }:
                 <button
                   type="button"
                   className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-slate-50 ${
-                    value === root.id ? 'bg-indigo-50' : ''
+                    value === root.id ? 'bg-primary-50' : ''
                   }`}
                   onClick={() => select(root.id)}
                 >
@@ -81,7 +81,7 @@ export function CategorySelect({ categories, kind, value, onChange, className }:
                     key={child.id}
                     type="button"
                     className={`w-full flex items-center gap-2 pl-8 pr-3 py-1.5 text-sm text-left hover:bg-slate-50 ${
-                      value === child.id ? 'bg-indigo-50' : ''
+                      value === child.id ? 'bg-primary-50' : ''
                     }`}
                     onClick={() => select(child.id)}
                   >

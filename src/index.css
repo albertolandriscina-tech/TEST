@@ -2,12 +2,81 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ---------- Tema colori (impostazioni) ---------- */
+/* Valori di default (Indaco); sovrascritti in base a [data-color-theme] più sotto. */
+:root {
+  --color-primary-50: #eef2ff;
+  --color-primary-100: #e0e7ff;
+  --color-primary-200: #c7d2fe;
+  --color-primary-400: #818cf8;
+  --color-primary-500: #6366f1;
+  --color-primary-600: #4f46e5;
+  --color-primary-700: #4338ca;
+  --color-primary-950: #1e1b4b;
+  --app-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+[data-color-theme='blue'] {
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-950: #172554;
+}
+
+[data-color-theme='green'] {
+  --color-primary-50: #ecfdf5;
+  --color-primary-100: #d1fae5;
+  --color-primary-200: #a7f3d0;
+  --color-primary-400: #34d399;
+  --color-primary-500: #10b981;
+  --color-primary-600: #059669;
+  --color-primary-700: #047857;
+  --color-primary-950: #022c22;
+}
+
+[data-color-theme='violet'] {
+  --color-primary-50: #f5f3ff;
+  --color-primary-100: #ede9fe;
+  --color-primary-200: #ddd6fe;
+  --color-primary-400: #a78bfa;
+  --color-primary-500: #8b5cf6;
+  --color-primary-600: #7c3aed;
+  --color-primary-700: #6d28d9;
+  --color-primary-950: #2e1065;
+}
+
+[data-color-theme='rose'] {
+  --color-primary-50: #fff1f2;
+  --color-primary-100: #ffe4e6;
+  --color-primary-200: #fecdd3;
+  --color-primary-400: #fb7185;
+  --color-primary-500: #f43f5e;
+  --color-primary-600: #e11d48;
+  --color-primary-700: #be123c;
+  --color-primary-950: #4c0519;
+}
+
+[data-color-theme='amber'] {
+  --color-primary-50: #fffbeb;
+  --color-primary-100: #fef3c7;
+  --color-primary-200: #fde68a;
+  --color-primary-400: #fbbf24;
+  --color-primary-500: #f59e0b;
+  --color-primary-600: #d97706;
+  --color-primary-700: #b45309;
+  --color-primary-950: #451a03;
+}
+
 html, body, #root {
   height: 100%;
 }
 
 body {
-  @apply bg-slate-50 text-slate-800;
+  @apply bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100;
 }
 
 ::-webkit-scrollbar {
@@ -15,11 +84,11 @@ body {
   height: 8px;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-slate-300 rounded-full;
+  @apply bg-slate-300 dark:bg-slate-600 rounded-full;
 }
 
 .card {
-  @apply bg-white rounded-xl shadow-sm border border-slate-200 p-4;
+  @apply bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4;
 }
 
 .btn {
@@ -27,27 +96,27 @@ body {
 }
 
 .btn-primary {
-  @apply btn bg-indigo-600 text-white hover:bg-indigo-700;
+  @apply btn bg-primary-600 text-white hover:bg-primary-700;
 }
 
 .btn-secondary {
-  @apply btn bg-slate-100 text-slate-700 hover:bg-slate-200;
+  @apply btn bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600;
 }
 
 .btn-danger {
-  @apply btn bg-red-50 text-red-600 hover:bg-red-100;
+  @apply btn bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-950 dark:text-red-400 dark:hover:bg-red-900;
 }
 
 .btn-ghost {
-  @apply btn text-slate-500 hover:bg-slate-100;
+  @apply btn text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700;
 }
 
 .input {
-  @apply w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500;
+  @apply w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100;
 }
 
 .label {
-  @apply block text-xs font-medium text-slate-500 mb-1;
+  @apply block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1;
 }
 
 .table-base {
@@ -55,13 +124,70 @@ body {
 }
 
 .table-base th {
-  @apply text-left text-xs font-semibold uppercase tracking-wide text-slate-500 px-3 py-2 border-b border-slate-200;
+  @apply text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 px-3 py-2 border-b border-slate-200 dark:border-slate-700;
 }
 
 .table-base td {
-  @apply px-3 py-2 border-b border-slate-100;
+  @apply px-3 py-2 border-b border-slate-100 dark:border-slate-700/60;
 }
 
 .badge {
   @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
+}
+
+/* ---------- Retrofit tema scuro per le classi Tailwind usate direttamente nel markup ---------- */
+.dark .bg-white { background-color: theme('colors.slate.800'); }
+.dark .bg-slate-50 { background-color: theme('colors.slate.900'); }
+.dark .bg-slate-100 { background-color: theme('colors.slate.700'); }
+.dark .hover\:bg-slate-50:hover { background-color: theme('colors.slate.700'); }
+.dark .hover\:bg-slate-100:hover { background-color: theme('colors.slate.700'); }
+.dark .hover\:text-slate-700:hover { color: theme('colors.slate.200'); }
+
+.dark .text-slate-800 { color: theme('colors.slate.100'); }
+.dark .text-slate-700 { color: theme('colors.slate.200'); }
+.dark .text-slate-600 { color: theme('colors.slate.300'); }
+.dark .text-slate-500 { color: theme('colors.slate.400'); }
+.dark .text-slate-400 { color: theme('colors.slate.500'); }
+.dark .text-slate-300 { color: theme('colors.slate.500'); }
+
+.dark .border-slate-200 { border-color: theme('colors.slate.700'); }
+.dark .border-slate-100 { border-color: theme('colors.slate.700'); }
+.dark .border-slate-300 { border-color: theme('colors.slate.600'); }
+
+.dark .bg-emerald-50 { background-color: theme('colors.emerald.950'); }
+.dark .border-emerald-200 { border-color: theme('colors.emerald.800'); }
+.dark .text-emerald-700 { color: theme('colors.emerald.400'); }
+
+.dark .bg-amber-50 { background-color: theme('colors.amber.950'); }
+.dark .border-amber-200 { border-color: theme('colors.amber.800'); }
+.dark .text-amber-700 { color: theme('colors.amber.400'); }
+
+.dark .bg-red-50 { background-color: theme('colors.red.950'); }
+.dark .border-red-200 { border-color: theme('colors.red.800'); }
+.dark .text-red-700 { color: theme('colors.red.400'); }
+
+/* Badge/chip in tema colori (bg-primary-50 ecc.): in scuro diventano scure invece di restare
+   chiare, altrimenti il testo (retrofittato a colori chiari) risulterebbe illeggibile sopra. */
+.dark .bg-primary-50 { background-color: var(--color-primary-950); }
+.dark .bg-primary-50\/50 { background-color: color-mix(in srgb, var(--color-primary-950) 60%, transparent); }
+.dark .bg-primary-50\/40 { background-color: color-mix(in srgb, var(--color-primary-950) 50%, transparent); }
+.dark .hover\:bg-primary-50:hover { background-color: var(--color-primary-950); }
+.dark .hover\:bg-primary-50\/40:hover { background-color: color-mix(in srgb, var(--color-primary-950) 50%, transparent); }
+.dark .border-primary-100 { border-color: var(--color-primary-700); }
+.dark .border-primary-200 { border-color: var(--color-primary-700); }
+.dark .text-primary-600 { color: var(--color-primary-400); }
+.dark .text-primary-700 { color: var(--color-primary-400); }
+.dark .ring-primary-200 { --tw-ring-color: var(--color-primary-700); }
+
+/* Tooltip dei grafici Recharts: lo stile di sfondo/bordo è inline via JS, va sovrascritto. */
+.dark .recharts-default-tooltip {
+  background-color: theme('colors.slate.800') !important;
+  border-color: theme('colors.slate.600') !important;
+}
+.dark .recharts-tooltip-label,
+.dark .recharts-tooltip-item,
+.dark .recharts-tooltip-item-name,
+.dark .recharts-tooltip-item-separator,
+.dark .recharts-tooltip-item-value {
+  color: theme('colors.slate.100') !important;
 }

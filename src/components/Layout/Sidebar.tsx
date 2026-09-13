@@ -11,6 +11,7 @@ import {
   Building2,
   Scale,
   Repeat,
+  Settings,
   Wallet,
   Sparkles,
   Eraser,
@@ -30,6 +31,7 @@ const navItems = [
   { to: '/patrimonio', label: 'Patrimonio', icon: Building2 },
   { to: '/bilancio', label: 'Bilancio', icon: Scale },
   { to: '/ricorrenti', label: 'Ricorrenti', icon: Repeat },
+  { to: '/impostazioni', label: 'Impostazioni', icon: Settings },
 ];
 
 interface SidebarProps {
@@ -53,7 +55,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       >
         <div className="flex items-center justify-between gap-2 px-4 py-4 border-b border-slate-200 shrink-0">
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center text-white shrink-0">
               <Wallet size={18} />
             </div>
             <span className="font-semibold text-slate-800 truncate">Finanza Personale</span>
@@ -71,7 +73,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               onClick={onClose}
               className={({ isActive }) =>
                 `flex items-center gap-2.5 px-3 py-2.5 lg:py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'
+                  isActive ? 'bg-primary-50 text-primary-700' : 'text-slate-600 hover:bg-slate-100'
                 }`
               }
             >
@@ -85,7 +87,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             className="flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100"
             onClick={() => setConfirmDemo(true)}
           >
-            <Sparkles size={16} className="text-indigo-500 shrink-0" />
+            <Sparkles size={16} className="text-primary-500 shrink-0" />
             <span className="truncate">Carica dati di esempio</span>
           </button>
           <button

@@ -6,7 +6,7 @@ import { formatCurrency } from '../../../utils/format';
 import type { AccountType } from '../../../types';
 
 const ICONS: Record<AccountType, JSX.Element> = {
-  bank: <Landmark size={15} className="text-indigo-500" />,
+  bank: <Landmark size={15} className="text-primary-500" />,
   cash: <Wallet size={15} className="text-emerald-500" />,
   investment: <TrendingUp size={15} className="text-blue-500" />,
   credit_card: <CreditCard size={15} className="text-red-500" />,

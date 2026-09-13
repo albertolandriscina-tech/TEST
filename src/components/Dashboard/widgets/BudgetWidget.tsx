@@ -63,7 +63,7 @@ export function BudgetWidget() {
           </span>
         </div>
         <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden">
-          <div className={`h-full rounded-full ${totalActual > totalBudget && totalBudget > 0 ? 'bg-red-500' : 'bg-indigo-500'}`} style={{ width: `${pct}%` }} />
+          <div className={`h-full rounded-full ${totalActual > totalBudget && totalBudget > 0 ? 'bg-red-500' : 'bg-primary-500'}`} style={{ width: `${pct}%` }} />
         </div>
       </div>
 
@@ -91,7 +91,7 @@ export function BudgetWidget() {
         {rows.length === 0 && <p className="text-sm text-slate-400 text-center py-6">Nessuna categoria di spesa.</p>}
       </ul>
 
-      <Link to="/budget" className="text-xs font-medium text-indigo-600 hover:underline self-start">
+      <Link to="/budget" className="text-xs font-medium text-primary-600 hover:underline self-start">
         Vedi tutto il budget →
       </Link>
     </div>

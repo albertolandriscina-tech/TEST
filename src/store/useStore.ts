@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type {
   Account,
+  AppSettings,
   Budget,
   Category,
   DashboardWidgetLayout,
@@ -13,6 +14,7 @@ import type {
   RecurringTransaction,
   Transaction,
 } from '../types';
+import { DEFAULT_SETTINGS } from '../types';
 import { newId, todayISO } from '../utils/id';
 import { buildDefaultCategories, SYSTEM_CATEGORY_INVESTMENT_BUY, SYSTEM_CATEGORY_INVESTMENT_SELL } from './seed';
 import { buildDemoDataset } from './demoData';
@@ -35,6 +37,7 @@ interface State {
   selectedTransactionIds: string[];
   dashboardLayout: DashboardWidgetLayout[];
   hiddenDashboardWidgets: DashboardWidgetType[];
+  settings: AppSettings;
 
   // Conti
   addAccount: (a: Omit<Account, 'id' | 'createdAt'>) => string;
@@ -88,6 +91,9 @@ interface State {
   hideDashboardWidget: (type: DashboardWidgetType) => void;
   showDashboardWidget: (type: DashboardWidgetType) => void;
   resetDashboardLayout: () => void;
+
+  // Impostazioni
+  updateSettings: (patch: Partial<AppSettings>) => void;
 }
 
 const demoDataset = buildDemoDataset();
@@ -107,6 +113,7 @@ export const useStore = create<State>()(
       selectedTransactionIds: [],
       dashboardLayout: buildDefaultLayout(),
       hiddenDashboardWidgets: [],
+      settings: DEFAULT_SETTINGS,
 
       addAccount: (a) => {
         const id = newId();
@@ -427,6 +434,8 @@ export const useStore = create<State>()(
           };
         }),
       resetDashboardLayout: () => set({ dashboardLayout: buildDefaultLayout(), hiddenDashboardWidgets: [] }),
+
+      updateSettings: (patch) => set((s) => ({ settings: { ...s.settings, ...patch } })),
     }),
     {
       name: 'finanza-personale-storage',

@@ -12,10 +12,13 @@ import { InvestmentsPage } from './components/Investments/InvestmentsPage';
 import { AssetsPage } from './components/Assets/AssetsPage';
 import { BalanceSheetPage } from './components/BalanceSheet/BalanceSheetPage';
 import { RecurringPage } from './components/Recurring/RecurringPage';
+import { SettingsPage } from './components/Settings/SettingsPage';
 import { useStore } from './store/useStore';
+import { applyAppearance } from './utils/theme';
 
 export default function App() {
   const generateDueRecurring = useStore((s) => s.generateDueRecurring);
+  const settings = useStore((s) => s.settings);
   const [notice, setNotice] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
@@ -34,6 +37,15 @@ export default function App() {
     setSidebarOpen(false);
   }, [location.pathname]);
 
+  useEffect(() => {
+    applyAppearance(settings.theme, settings.colorTheme, settings.fontFamily);
+    if (settings.theme !== 'system') return;
+    const mql = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = () => applyAppearance(settings.theme, settings.colorTheme, settings.fontFamily);
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, [settings.theme, settings.colorTheme, settings.fontFamily]);
+
   return (
     <div className="flex h-screen w-full overflow-hidden">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
@@ -43,7 +55,7 @@ export default function App() {
             <Menu size={20} />
           </button>
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-6 h-6 rounded-md bg-indigo-600 flex items-center justify-center text-white shrink-0">
+            <div className="w-6 h-6 rounded-md bg-primary-600 flex items-center justify-center text-white shrink-0">
               <Wallet size={13} />
             </div>
             <span className="font-semibold text-slate-800 text-sm truncate">Finanza Personale</span>
@@ -51,7 +63,7 @@ export default function App() {
         </header>
         <main className="flex-1 overflow-y-auto overflow-x-hidden">
           {notice && (
-            <div className="bg-indigo-600 text-white text-sm text-center py-1.5 px-3">{notice}</div>
+            <div className="bg-primary-600 text-white text-sm text-center py-1.5 px-3">{notice}</div>
           )}
           <div className="max-w-7xl mx-auto p-4 sm:p-6">
             <Routes>
@@ -65,6 +77,7 @@ export default function App() {
               <Route path="/patrimonio" element={<AssetsPage />} />
               <Route path="/bilancio" element={<BalanceSheetPage />} />
               <Route path="/ricorrenti" element={<RecurringPage />} />
+              <Route path="/impostazioni" element={<SettingsPage />} />
             </Routes>
           </div>
         </main>

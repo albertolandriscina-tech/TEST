@@ -11,6 +11,7 @@ import {
   type CategoryBreakdownItem,
 } from '../../utils/analytics';
 import { formatCurrency, formatDate, formatNumber } from '../../utils/format';
+import { getAccentColor } from '../../utils/theme';
 import { CategoryIconCircle } from '../common/CategoryBadge';
 
 type Period = 'month' | 'year' | 'custom';
@@ -41,6 +42,7 @@ function DeltaBadge({ value, invert = false }: { value: number | null; invert?: 
 }
 
 function CategoryBreakdownList({ items, total }: { items: CategoryBreakdownItem[]; total: number }) {
+  const accent = getAccentColor(useStore((s) => s.settings.colorTheme));
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const toggle = (id: string) =>
@@ -86,7 +88,7 @@ function CategoryBreakdownList({ items, total }: { items: CategoryBreakdownItem[
               <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
                 <div
                   className="h-full rounded-full"
-                  style={{ width: `${Math.min(100, item.pct)}%`, backgroundColor: item.category.color ?? '#6366f1' }}
+                  style={{ width: `${Math.min(100, item.pct)}%`, backgroundColor: item.category.color ?? accent }}
                 />
               </div>
             </button>
@@ -119,6 +121,7 @@ function CategoryBreakdownList({ items, total }: { items: CategoryBreakdownItem[
 export function AnalysisPage() {
   const transactions = useStore((s) => s.transactions);
   const categories = useStore((s) => s.categories);
+  const accent = getAccentColor(useStore((s) => s.settings.colorTheme));
 
   const [period, setPeriod] = useState<Period>('month');
   const now = new Date();
@@ -224,7 +227,7 @@ export function AnalysisPage() {
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
-                className={`px-3 py-1.5 font-medium ${period === p ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+                className={`px-3 py-1.5 font-medium ${period === p ? 'bg-primary-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
               >
                 {p === 'month' ? 'Mese' : p === 'year' ? 'Anno' : 'Personalizzato'}
               </button>
@@ -299,7 +302,7 @@ export function AnalysisPage() {
                 <Tooltip formatter={(v: number) => formatCurrency(v)} />
                 <Bar dataKey="entrate" name="Entrate" fill="#10b981" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="uscite" name="Uscite" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                <Line type="monotone" dataKey="saldo" name="Saldo netto" stroke="#6366f1" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="saldo" name="Saldo netto" stroke={accent} strokeWidth={2} dot={false} />
               </ComposedChart>
             </ResponsiveContainer>
           )}

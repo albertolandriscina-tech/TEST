@@ -46,7 +46,7 @@ export function RecurringPage() {
         </div>
       </div>
 
-      {message && <div className="card bg-indigo-50 border-indigo-200 text-indigo-700 text-sm">{message}</div>}
+      {message && <div className="card bg-primary-50 border-primary-200 text-primary-700 text-sm">{message}</div>}
 
       {rules.length === 0 && (
         <div className="card text-center text-slate-400 py-6">Nessun movimento ricorrente configurato.</div>

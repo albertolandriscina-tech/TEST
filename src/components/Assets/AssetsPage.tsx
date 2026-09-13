@@ -8,9 +8,9 @@ import { AssetForm } from './AssetForm';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 
 const categoryIcon: Record<AssetCategory, JSX.Element> = {
-  real_estate: <Building2 size={16} className="text-indigo-500" />,
-  vehicle: <Car size={16} className="text-indigo-500" />,
-  other: <Package size={16} className="text-indigo-500" />,
+  real_estate: <Building2 size={16} className="text-primary-500" />,
+  vehicle: <Car size={16} className="text-primary-500" />,
+  other: <Package size={16} className="text-primary-500" />,
 };
 
 export function AssetsPage() {
@@ -39,7 +39,7 @@ export function AssetsPage() {
 
       <div className="card flex items-center justify-between flex-wrap gap-2">
         <span className="text-sm text-slate-500">Valore totale beni patrimoniali</span>
-        <span className="text-xl font-semibold text-indigo-600">{formatCurrency(total)}</span>
+        <span className="text-xl font-semibold text-primary-600">{formatCurrency(total)}</span>
       </div>
 
       {assets.length === 0 && (

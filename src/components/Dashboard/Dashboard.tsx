@@ -85,7 +85,7 @@ export function Dashboard() {
       </div>
 
       {editMode && (
-        <div className="card !py-2 bg-indigo-50 border-indigo-200 text-sm text-indigo-700">
+        <div className="card !py-2 bg-primary-50 border-primary-200 text-sm text-primary-700">
           Trascina i widget dall'icona <span className="inline-block align-middle">⠿</span> per riordinarli, ridimensionali
           dall'angolo in basso a destra, o rimuovili con la ×.
         </div>

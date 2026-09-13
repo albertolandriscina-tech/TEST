@@ -4,6 +4,7 @@ import { useStore } from '../../../store/useStore';
 import { computeAllHoldings } from '../../../utils/ledger';
 import { buildNetWorthTrend } from '../../../utils/analytics';
 import { formatCurrency } from '../../../utils/format';
+import { getAccentColor } from '../../../utils/theme';
 
 export function NetWorthTrendWidget() {
   const accounts = useStore((s) => s.accounts);
@@ -11,6 +12,7 @@ export function NetWorthTrendWidget() {
   const investments = useStore((s) => s.investments);
   const investmentTransactions = useStore((s) => s.investmentTransactions);
   const patrimonioAssets = useStore((s) => s.patrimonioAssets);
+  const accent = getAccentColor(useStore((s) => s.settings.colorTheme));
 
   const holdings = useMemo(() => computeAllHoldings(investments, investmentTransactions), [investments, investmentTransactions]);
   const points = useMemo(
@@ -36,15 +38,15 @@ export function NetWorthTrendWidget() {
           <AreaChart data={points} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
             <defs>
               <linearGradient id="networthFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.35} />
-                <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                <stop offset="5%" stopColor={accent} stopOpacity={0.35} />
+                <stop offset="95%" stopColor={accent} stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
             <XAxis dataKey="label" tick={{ fontSize: 11 }} />
             <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => formatCurrency(v)} width={80} domain={['auto', 'auto']} />
             <Tooltip formatter={(v: number) => formatCurrency(v)} />
-            <Area type="monotone" dataKey="value" name="Patrimonio netto" stroke="#6366f1" strokeWidth={2} fill="url(#networthFill)" />
+            <Area type="monotone" dataKey="value" name="Patrimonio netto" stroke={accent} strokeWidth={2} fill="url(#networthFill)" />
           </AreaChart>
         </ResponsiveContainer>
       </div>

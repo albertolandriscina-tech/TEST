@@ -124,8 +124,8 @@ export function TransactionsPage() {
       </div>
 
       {selectedIds.length > 0 && (
-        <div className="card !py-2 flex items-center justify-between bg-indigo-50 border-indigo-200">
-          <span className="text-sm text-indigo-700 font-medium">{selectedIds.length} movimenti selezionati</span>
+        <div className="card !py-2 flex items-center justify-between bg-primary-50 border-primary-200">
+          <span className="text-sm text-primary-700 font-medium">{selectedIds.length} movimenti selezionati</span>
           <div className="flex gap-2">
             <button className="btn-secondary" onClick={clearSelection}>
               Deseleziona
@@ -155,7 +155,7 @@ export function TransactionsPage() {
       {/* Vista a card: sotto sm */}
       <div className="sm:hidden space-y-2">
         {filtered.map((t) => (
-          <div key={t.id} className={`card flex items-start gap-3 ${selectedIds.includes(t.id) ? 'bg-indigo-50/50 border-indigo-200' : ''}`}>
+          <div key={t.id} className={`card flex items-start gap-3 ${selectedIds.includes(t.id) ? 'bg-primary-50/50 border-primary-200' : ''}`}>
             <input
               type="checkbox"
               className="mt-1 shrink-0"
@@ -219,7 +219,7 @@ export function TransactionsPage() {
           </thead>
           <tbody>
             {filtered.map((t) => (
-              <tr key={t.id} className={selectedIds.includes(t.id) ? 'bg-indigo-50/50' : ''}>
+              <tr key={t.id} className={selectedIds.includes(t.id) ? 'bg-primary-50/50' : ''}>
                 <td>
                   <input type="checkbox" checked={selectedIds.includes(t.id)} onChange={() => toggleSelect(t.id)} />
                 </td>

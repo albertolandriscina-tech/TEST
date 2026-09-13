@@ -36,9 +36,9 @@ export function KpiWidget() {
         label="Saldo (mese)"
         value={formatCurrency(currentMonthIncome - currentMonthExpense)}
         tone={currentMonthIncome - currentMonthExpense >= 0 ? 'positive' : 'negative'}
-        icon={<Scale size={16} className="text-indigo-500" />}
+        icon={<Scale size={16} className="text-primary-500" />}
       />
-      <StatCard label="Patrimonio netto" value={formatCurrency(netWorth.patrimonioNetto)} tone="accent" icon={<Wallet size={16} className="text-indigo-500" />} />
+      <StatCard label="Patrimonio netto" value={formatCurrency(netWorth.patrimonioNetto)} tone="accent" icon={<Wallet size={16} className="text-primary-500" />} />
     </div>
   );
 }

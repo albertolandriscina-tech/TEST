@@ -1,7 +1,10 @@
-export function formatCurrency(value: number, currency = 'EUR'): string {
+import { useStore } from '../store/useStore';
+
+export function formatCurrency(value: number, currency?: string): string {
+  const cur = currency ?? useStore.getState().settings.currency;
   return new Intl.NumberFormat('it-IT', {
     style: 'currency',
-    currency,
+    currency: cur,
     maximumFractionDigits: 2,
   }).format(value);
 }

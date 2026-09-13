@@ -11,7 +11,7 @@ interface WidgetCardProps {
 
 export function WidgetCard({ title, editMode, onRemove, headerExtra, children }: WidgetCardProps) {
   return (
-    <div className={`card !p-0 h-full flex flex-col overflow-hidden ${editMode ? 'ring-2 ring-indigo-200' : ''}`}>
+    <div className={`card !p-0 h-full flex flex-col overflow-hidden ${editMode ? 'ring-2 ring-primary-200' : ''}`}>
       <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-slate-100 shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           {editMode && (
