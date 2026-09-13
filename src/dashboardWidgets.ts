@@ -10,7 +10,7 @@ export const WIDGET_DEFINITIONS: Record<DashboardWidgetType, WidgetDefinition> =
   kpi: {
     type: 'kpi',
     title: 'Riepilogo del mese',
-    defaultLayout: { x: 0, y: 0, w: 12, h: 8, minW: 6, minH: 6 },
+    defaultLayout: { x: 0, y: 0, w: 12, h: 6, minW: 3, minH: 4 },
   },
   cashflow: {
     type: 'cashflow',
