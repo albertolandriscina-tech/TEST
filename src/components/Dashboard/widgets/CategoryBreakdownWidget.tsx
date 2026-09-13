@@ -1,57 +1,30 @@
 import { useMemo } from 'react';
-import { subMonths } from 'date-fns';
+import { endOfMonth, format, startOfMonth, subMonths } from 'date-fns';
 import { ArrowDownRight, ArrowUpRight, Minus } from 'lucide-react';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { useStore } from '../../../store/useStore';
-import { pctDelta } from '../../../utils/analytics';
-import { formatCompactCurrency, formatCurrency } from '../../../utils/format';
-import { getCategoryColor } from '../../../utils/categoryStyle';
+import { buildCategoryBreakdown, pctDelta } from '../../../utils/analytics';
+import { formatCompactCurrency, formatCurrency, formatNumber } from '../../../utils/format';
+import { CategoryIconCircle } from '../../common/CategoryBadge';
 
-const MAX_SLICES = 7;
+const MAX_SLICES = 6;
 const OTHER_COLOR = '#94a3b8';
 
-function monthKey(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+function monthRange(d: Date) {
+  return { fromISO: format(startOfMonth(d), 'yyyy-MM-dd'), toISO: format(endOfMonth(d), 'yyyy-MM-dd') };
 }
 
-function monthlyExpenseByRootCategory(
-  transactions: ReturnType<typeof useStore.getState>['transactions'],
-  categories: ReturnType<typeof useStore.getState>['categories'],
-  key: string
-) {
-  const roots = categories.filter((c) => c.kind === 'expense' && !c.parentId && !c.system);
-  return roots
-    .map((root) => {
-      const value = transactions
-        .filter((t) => t.type === 'expense' && !t.investmentTxId && t.date.startsWith(key))
-        .filter((t) => {
-          if (t.categoryId === root.id) return true;
-          const cat = categories.find((c) => c.id === t.categoryId);
-          return cat?.parentId === root.id;
-        })
-        .reduce((s, t) => s + t.amount, 0);
-      return { name: root.name, value, color: getCategoryColor(root) };
-    })
-    .filter((d) => d.value > 0)
-    .sort((a, b) => b.value - a.value);
-}
-
-function DeltaPill({ value }: { value: number | null }) {
+function MiniDelta({ value }: { value: number | null }) {
   const neutral = value === null || Math.abs(value) < 0.5;
   const positive = value !== null && value > 0;
   const Icon = neutral ? Minus : positive ? ArrowUpRight : ArrowDownRight;
-  const colorClass = neutral ? 'bg-slate-100 text-slate-500' : positive ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600';
+  const colorClass = neutral ? 'text-slate-400' : positive ? 'text-red-600' : 'text-emerald-600';
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${colorClass}`}>
+    <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${colorClass}`}>
       <Icon size={12} />
-      {value === null ? 'n/d' : `${formatCompactPct(value)}%`}
+      {value === null ? 'n/d' : `${formatNumber(Math.abs(value), value >= 10 || value <= -10 ? 0 : 1)}%`}
     </span>
   );
-}
-
-function formatCompactPct(v: number): string {
-  const abs = Math.abs(v);
-  return `${v < 0 ? '-' : ''}${abs.toFixed(abs < 10 ? 1 : 0)}`;
 }
 
 export function CategoryBreakdownWidget() {
@@ -59,28 +32,35 @@ export function CategoryBreakdownWidget() {
   const categories = useStore((s) => s.categories);
   const now = new Date();
 
-  const currentBreakdown = useMemo(
-    () => monthlyExpenseByRootCategory(transactions, categories, monthKey(now)),
+  const currentBreakdown = useMemo(() => {
+    const { fromISO, toISO } = monthRange(now);
+    return buildCategoryBreakdown(transactions, categories, 'expense', fromISO, toISO);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [transactions, categories]
-  );
-  const previousTotal = useMemo(
-    () => monthlyExpenseByRootCategory(transactions, categories, monthKey(subMonths(now, 1))).reduce((s, d) => s + d.value, 0),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [transactions, categories]
-  );
+  }, [transactions, categories]);
 
-  const { chartData, legendItems, total } = useMemo(() => {
+  const previousTotal = useMemo(() => {
+    const { fromISO, toISO } = monthRange(subMonths(now, 1));
+    return buildCategoryBreakdown(transactions, categories, 'expense', fromISO, toISO).reduce((s, d) => s + d.amount, 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transactions, categories]);
+
+  const { legendItems, otherValue, total } = useMemo(() => {
     const top = currentBreakdown.slice(0, MAX_SLICES);
     const rest = currentBreakdown.slice(MAX_SLICES);
-    const otherValue = rest.reduce((s, d) => s + d.value, 0);
-    const items = otherValue > 0 ? [...top, { name: 'Altri', value: otherValue, color: OTHER_COLOR }] : top;
     return {
-      chartData: items,
-      legendItems: items,
-      total: currentBreakdown.reduce((s, d) => s + d.value, 0),
+      legendItems: top,
+      otherValue: rest.reduce((s, d) => s + d.amount, 0),
+      total: currentBreakdown.reduce((s, d) => s + d.amount, 0),
     };
   }, [currentBreakdown]);
+
+  const chartData = useMemo(
+    () => [
+      ...legendItems.map((d) => ({ name: d.category.name, value: d.amount, color: d.category.color ?? OTHER_COLOR })),
+      ...(otherValue > 0 ? [{ name: 'Altri', value: otherValue, color: OTHER_COLOR }] : []),
+    ],
+    [legendItems, otherValue]
+  );
 
   const delta = pctDelta(total, previousTotal);
 
@@ -89,51 +69,56 @@ export function CategoryBreakdownWidget() {
   }
 
   return (
-    <div className="h-full flex flex-col gap-2">
-      <div className="flex justify-end">
-        <div className="text-right">
-          <div className="text-[11px] text-slate-400">VS periodo precedente</div>
-          <DeltaPill value={delta} />
+    <div className="flex flex-col h-full gap-3">
+      <div className="flex items-center justify-between text-xs text-slate-500">
+        <span>
+          Tutte le categorie · <span className="font-medium text-slate-700">{formatCompactCurrency(-total)}</span>
+        </span>
+        <span className="flex items-center gap-1 text-slate-400">
+          vs mese prec. <MiniDelta value={delta} />
+        </span>
+      </div>
+
+      <div className="flex justify-center shrink-0">
+        <div className="relative w-40 h-40">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie data={chartData} dataKey="value" nameKey="name" innerRadius="60%" outerRadius="100%" paddingAngle={2} stroke="none">
+                {chartData.map((d, i) => (
+                  <Cell key={i} fill={d.color} />
+                ))}
+              </Pie>
+              <Tooltip formatter={(v: number) => formatCurrency(v)} />
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-4">
+            <span className="text-xs text-slate-400 leading-tight text-center">Tutte le categorie</span>
+          </div>
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 flex items-center gap-4">
-        <div className="shrink-0 flex flex-col items-start gap-2">
-          <div>
-            <div className="text-xs text-slate-400">Tutti</div>
-            <div className="text-lg font-semibold text-slate-800 whitespace-nowrap">{formatCompactCurrency(-total)}</div>
-          </div>
-          <div className="relative w-28 h-28 shrink-0">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={chartData} dataKey="value" nameKey="name" innerRadius="62%" outerRadius="100%" paddingAngle={2} stroke="none">
-                  {chartData.map((d, i) => (
-                    <Cell key={i} fill={d.color} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(v: number) => formatCurrency(v)} />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-3">
-              <span className="text-[10px] text-slate-400 leading-tight text-center">Tutte le categorie</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex-1 min-w-0 h-full overflow-y-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
-            {legendItems.map((d) => (
-              <div key={d.name} className="flex items-center justify-between gap-2 min-w-0">
-                <span className="flex items-center gap-1.5 min-w-0">
-                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
-                  <span className="truncate text-slate-600">{d.name}</span>
-                </span>
-                <span className="text-slate-400 shrink-0">{formatCurrency(d.value)}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      <ul className="flex-1 overflow-auto space-y-2 min-h-0">
+        {legendItems.map(({ category, amount }) => (
+          <li key={category.id} className="flex items-center justify-between gap-2 text-xs">
+            <span className="flex items-center gap-1.5 min-w-0 text-slate-600 truncate">
+              <CategoryIconCircle category={category} />
+              <span className="truncate">{category.name}</span>
+            </span>
+            <span className="text-slate-500 shrink-0 whitespace-nowrap">{formatCurrency(amount)}</span>
+          </li>
+        ))}
+        {otherValue > 0 && (
+          <li className="flex items-center justify-between gap-2 text-xs">
+            <span className="flex items-center gap-1.5 min-w-0 text-slate-600 truncate">
+              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 text-slate-400 shrink-0 text-[10px]">
+                ⋯
+              </span>
+              <span className="truncate">Altri</span>
+            </span>
+            <span className="text-slate-500 shrink-0 whitespace-nowrap">{formatCurrency(otherValue)}</span>
+          </li>
+        )}
+      </ul>
     </div>
   );
 }
