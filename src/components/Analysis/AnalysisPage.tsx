@@ -42,14 +42,36 @@ function DeltaBadge({ value, invert = false }: { value: number | null; invert?: 
   );
 }
 
+/** Variante compatta di DeltaBadge, per le singole voci di una lista (es. categorie). */
+function MiniDelta({ value, invert = false }: { value: number | null; invert?: boolean }) {
+  if (value === null) return null;
+  const positive = invert ? value <= 0 : value >= 0;
+  const Icon = value >= 0 ? ArrowUpRight : ArrowDownRight;
+  return (
+    <span
+      className={`inline-flex items-center gap-0.5 text-[11px] font-medium shrink-0 ${positive ? 'text-emerald-600' : 'text-red-600'}`}
+      title="Rispetto al periodo precedente"
+    >
+      <Icon size={11} />
+      {value >= 0 ? '+' : ''}
+      {formatNumber(value, 0)}%
+    </span>
+  );
+}
+
 function CategoryBreakdownList({
   items,
   total,
   otherAmount = 0,
+  previousAmounts,
+  invert = false,
 }: {
   items: CategoryBreakdownItem[];
   total: number;
   otherAmount?: number;
+  /** Importo per categoria nel periodo precedente, per mostrare la variazione. */
+  previousAmounts?: Map<string, number>;
+  invert?: boolean;
 }) {
   const accent = getAccentColor(useStore((s) => s.settings.colorTheme));
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -89,9 +111,14 @@ function CategoryBreakdownList({
                   <CategoryIconCircle category={item.category} />
                   <span className="truncate">{item.category.name}</span>
                 </span>
-                <span className="text-right shrink-0">
-                  <span className="font-medium text-slate-700">{formatCurrency(item.amount)}</span>{' '}
-                  <span className="text-xs text-slate-400">({formatNumber(item.pct, 0)}%)</span>
+                <span className="flex items-center gap-1.5 shrink-0">
+                  {previousAmounts && (
+                    <MiniDelta value={pctDelta(item.amount, previousAmounts.get(item.category.id) ?? 0)} invert={invert} />
+                  )}
+                  <span className="text-right">
+                    <span className="font-medium text-slate-700">{formatCurrency(item.amount)}</span>{' '}
+                    <span className="text-xs text-slate-400">({formatNumber(item.pct, 0)}%)</span>
+                  </span>
                 </span>
               </div>
               <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
@@ -153,6 +180,7 @@ export function AnalysisPage() {
   const accent = getAccentColor(useStore((s) => s.settings.colorTheme));
 
   const [period, setPeriod] = useState<Period>('month');
+  const [compareEnabled, setCompareEnabled] = useState(true);
   const now = new Date();
   const [monthValue, setMonthValue] = useState(monthInputValue(now));
   const [yearValue, setYearValue] = useState(now.getFullYear());
@@ -217,6 +245,29 @@ export function AnalysisPage() {
     [transactions, accounts, fromISO, toISO, granularity]
   );
 
+  const prevTrend = useMemo(
+    () =>
+      !compareEnabled
+        ? []
+        : granularity === 'day'
+        ? buildDailyCashFlow(transactions, accounts, prevFromISO, prevToISO)
+        : buildCustomRangeCashFlow(transactions, accounts, prevFromISO, prevToISO),
+    [transactions, accounts, prevFromISO, prevToISO, granularity, compareEnabled]
+  );
+
+  // Il periodo precedente viene sovrapposto al grafico allineando per indice (1° giorno/mese
+  // del periodo corrente col 1° giorno/mese del precedente), non per data effettiva.
+  const mergedTrend = useMemo(
+    () =>
+      trend.map((point, i) => ({
+        ...point,
+        entratePrec: prevTrend[i]?.entrate,
+        uscitePrec: prevTrend[i]?.uscite,
+        saldoPrec: prevTrend[i]?.saldo,
+      })),
+    [trend, prevTrend]
+  );
+
   const incomeBreakdown = useMemo(
     () => buildCategoryBreakdown(transactions, categories, 'income', fromISO, toISO),
     [transactions, categories, fromISO, toISO]
@@ -224,6 +275,23 @@ export function AnalysisPage() {
   const expenseBreakdown = useMemo(
     () => buildCategoryBreakdown(transactions, categories, 'expense', fromISO, toISO),
     [transactions, categories, fromISO, toISO]
+  );
+
+  const prevIncomeBreakdown = useMemo(
+    () => (compareEnabled ? buildCategoryBreakdown(transactions, categories, 'income', prevFromISO, prevToISO) : []),
+    [transactions, categories, prevFromISO, prevToISO, compareEnabled]
+  );
+  const prevExpenseBreakdown = useMemo(
+    () => (compareEnabled ? buildCategoryBreakdown(transactions, categories, 'expense', prevFromISO, prevToISO) : []),
+    [transactions, categories, prevFromISO, prevToISO, compareEnabled]
+  );
+  const prevIncomeByCategory = useMemo(
+    () => new Map(prevIncomeBreakdown.map((i) => [i.category.id, i.amount])),
+    [prevIncomeBreakdown]
+  );
+  const prevExpenseByCategory = useMemo(
+    () => new Map(prevExpenseBreakdown.map((i) => [i.category.id, i.amount])),
+    [prevExpenseBreakdown]
   );
 
   // Il flusso di cassa comprende anche i trasferimenti verso/da conti non liquidi (es.
@@ -302,42 +370,75 @@ export function AnalysisPage() {
               />
             </div>
           )}
+
+          <label className="flex items-center gap-1.5 text-sm text-slate-600 ml-auto">
+            <input type="checkbox" checked={compareEnabled} onChange={(e) => setCompareEnabled(e.target.checked)} />
+            Confronta con periodo precedente
+          </label>
         </div>
+        {compareEnabled && (
+          <p className="text-xs text-slate-400 mt-2">
+            Periodo di confronto: {formatDate(prevFromISO)} – {formatDate(prevToISO)}
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="card min-w-0">
           <span className="text-xs text-slate-400 uppercase">Entrate</span>
           <div className="text-lg sm:text-xl font-semibold text-emerald-600 break-words">{formatCurrency(entrate)}</div>
-          <DeltaBadge value={pctDelta(entrate, prevEntrate)} />
+          {compareEnabled && (
+            <>
+              <DeltaBadge value={pctDelta(entrate, prevEntrate)} />
+              <div className="text-[11px] text-slate-400 mt-0.5">Periodo prec.: {formatCurrency(prevEntrate)}</div>
+            </>
+          )}
         </div>
         <div className="card min-w-0">
           <span className="text-xs text-slate-400 uppercase">Uscite</span>
           <div className="text-lg sm:text-xl font-semibold text-red-600 break-words">{formatCurrency(uscite)}</div>
-          <DeltaBadge value={pctDelta(uscite, prevUscite)} invert />
+          {compareEnabled && (
+            <>
+              <DeltaBadge value={pctDelta(uscite, prevUscite)} invert />
+              <div className="text-[11px] text-slate-400 mt-0.5">Periodo prec.: {formatCurrency(prevUscite)}</div>
+            </>
+          )}
         </div>
         <div className="card min-w-0">
           <span className="text-xs text-slate-400 uppercase">Saldo netto</span>
           <div className={`text-lg sm:text-xl font-semibold break-words ${saldo >= 0 ? 'text-slate-800' : 'text-red-600'}`}>
             {formatCurrency(saldo)}
           </div>
-          <DeltaBadge value={pctDelta(saldo, prevSaldo)} />
+          {compareEnabled && (
+            <>
+              <DeltaBadge value={pctDelta(saldo, prevSaldo)} />
+              <div className="text-[11px] text-slate-400 mt-0.5">Periodo prec.: {formatCurrency(prevSaldo)}</div>
+            </>
+          )}
         </div>
         <div className="card min-w-0">
           <span className="text-xs text-slate-400 uppercase">Tasso di risparmio</span>
           <div className="text-lg sm:text-xl font-semibold text-slate-800 break-words">{formatNumber(savingsRate, 1)}%</div>
-          <DeltaBadge value={pctDelta(savingsRate, prevSavingsRate)} />
+          {compareEnabled && (
+            <>
+              <DeltaBadge value={pctDelta(savingsRate, prevSavingsRate)} />
+              <div className="text-[11px] text-slate-400 mt-0.5">Periodo prec.: {formatNumber(prevSavingsRate, 1)}%</div>
+            </>
+          )}
         </div>
       </div>
 
       <div className="card">
-        <h3 className="text-sm font-semibold text-slate-700 mb-2">Andamento nel periodo</h3>
+        <h3 className="text-sm font-semibold text-slate-700 mb-2">
+          Andamento nel periodo
+          {compareEnabled && <span className="text-xs font-normal text-slate-400"> (tratteggio: periodo precedente)</span>}
+        </h3>
         <div className="h-64">
-          {trend.length === 0 ? (
+          {mergedTrend.length === 0 ? (
             <p className="text-sm text-slate-400 text-center py-16">Nessun dato nel periodo selezionato.</p>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={trend} margin={{ left: 0, right: 8, top: 4, bottom: 0 }}>
+              <ComposedChart data={mergedTrend} margin={{ left: 0, right: 8, top: 4, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => formatCurrency(v)} width={70} />
@@ -345,6 +446,40 @@ export function AnalysisPage() {
                 <Bar dataKey="entrate" name="Entrate" fill="#10b981" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="uscite" name="Uscite" fill="#ef4444" radius={[4, 4, 0, 0]} />
                 <Line type="monotone" dataKey="saldo" name="Saldo netto" stroke={accent} strokeWidth={2} dot={false} />
+                {compareEnabled && (
+                  <>
+                    <Line
+                      type="monotone"
+                      dataKey="entratePrec"
+                      name="Entrate periodo prec."
+                      stroke="#10b981"
+                      strokeWidth={1.5}
+                      strokeDasharray="4 3"
+                      strokeOpacity={0.6}
+                      dot={false}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="uscitePrec"
+                      name="Uscite periodo prec."
+                      stroke="#ef4444"
+                      strokeWidth={1.5}
+                      strokeDasharray="4 3"
+                      strokeOpacity={0.6}
+                      dot={false}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="saldoPrec"
+                      name="Saldo periodo prec."
+                      stroke={accent}
+                      strokeWidth={1.5}
+                      strokeDasharray="4 3"
+                      strokeOpacity={0.6}
+                      dot={false}
+                    />
+                  </>
+                )}
               </ComposedChart>
             </ResponsiveContainer>
           )}
@@ -354,11 +489,22 @@ export function AnalysisPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="card">
           <h3 className="text-sm font-semibold text-slate-700 mb-3">Entrate per categoria</h3>
-          <CategoryBreakdownList items={incomeBreakdown} total={entrate} otherAmount={otherIncome} />
+          <CategoryBreakdownList
+            items={incomeBreakdown}
+            total={entrate}
+            otherAmount={otherIncome}
+            previousAmounts={compareEnabled ? prevIncomeByCategory : undefined}
+          />
         </div>
         <div className="card">
           <h3 className="text-sm font-semibold text-slate-700 mb-3">Uscite per categoria</h3>
-          <CategoryBreakdownList items={expenseBreakdown} total={uscite} otherAmount={otherExpense} />
+          <CategoryBreakdownList
+            items={expenseBreakdown}
+            total={uscite}
+            otherAmount={otherExpense}
+            previousAmounts={compareEnabled ? prevExpenseByCategory : undefined}
+            invert
+          />
         </div>
       </div>
 
