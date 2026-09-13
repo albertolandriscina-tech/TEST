@@ -199,7 +199,7 @@ export function AnalysisPage() {
   const topIncome = useMemo(
     () =>
       transactions
-        .filter((t) => t.type === 'income' && t.date >= fromISO && t.date <= toISO)
+        .filter((t) => t.type === 'income' && !t.investmentTxId && t.date >= fromISO && t.date <= toISO)
         .sort((a, b) => b.amount - a.amount)
         .slice(0, 5),
     [transactions, fromISO, toISO]
@@ -207,7 +207,7 @@ export function AnalysisPage() {
   const topExpense = useMemo(
     () =>
       transactions
-        .filter((t) => t.type === 'expense' && t.date >= fromISO && t.date <= toISO)
+        .filter((t) => t.type === 'expense' && !t.investmentTxId && t.date >= fromISO && t.date <= toISO)
         .sort((a, b) => b.amount - a.amount)
         .slice(0, 5),
     [transactions, fromISO, toISO]

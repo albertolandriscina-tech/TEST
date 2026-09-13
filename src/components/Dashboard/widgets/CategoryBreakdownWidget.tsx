@@ -12,11 +12,11 @@ export function CategoryBreakdownWidget() {
   const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
   const categoryBreakdown = useMemo(() => {
-    const roots = categories.filter((c) => c.kind === 'expense' && !c.parentId);
+    const roots = categories.filter((c) => c.kind === 'expense' && !c.parentId && !c.system);
     return roots
       .map((root) => {
         const value = transactions
-          .filter((t) => t.type === 'expense' && t.date.startsWith(currentMonthKey))
+          .filter((t) => t.type === 'expense' && !t.investmentTxId && t.date.startsWith(currentMonthKey))
           .filter((t) => {
             if (t.categoryId === root.id) return true;
             const cat = categories.find((c) => c.id === t.categoryId);

@@ -16,10 +16,10 @@ export function KpiWidget() {
   const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
   const currentMonthIncome = transactions
-    .filter((t) => t.type === 'income' && t.date.startsWith(currentMonthKey))
+    .filter((t) => t.type === 'income' && !t.investmentTxId && t.date.startsWith(currentMonthKey))
     .reduce((s, t) => s + t.amount, 0);
   const currentMonthExpense = transactions
-    .filter((t) => t.type === 'expense' && t.date.startsWith(currentMonthKey))
+    .filter((t) => t.type === 'expense' && !t.investmentTxId && t.date.startsWith(currentMonthKey))
     .reduce((s, t) => s + t.amount, 0);
 
   const holdings = useMemo(() => computeAllHoldings(investments, investmentTransactions), [investments, investmentTransactions]);

@@ -11,9 +11,15 @@ export interface CashFlowBucket {
   saldo: number;
 }
 
+/**
+ * Somma i movimenti di un tipo (entrata/uscita) in un intervallo di date, escludendo gli
+ * acquisti/vendite di investimenti: sono trasferimenti patrimoniali (il denaro resta
+ * all'interno del patrimonio, spostandosi verso gli strumenti finanziari) e non vere
+ * entrate/uscite economiche, quindi non devono comparire come tali in report e analisi.
+ */
 export function sumByType(transactions: Transaction[], type: 'income' | 'expense', from: Date, to: Date): number {
   return transactions
-    .filter((t) => t.type === type)
+    .filter((t) => t.type === type && !t.investmentTxId)
     .filter((t) => {
       const d = parseISO(t.date);
       return !isBefore(d, from) && !isAfter(d, to);
@@ -68,7 +74,7 @@ export function buildCategoryBreakdown(
   fromISO: string,
   toISO: string
 ): CategoryBreakdownItem[] {
-  const filtered = transactions.filter((t) => t.type === type && t.date >= fromISO && t.date <= toISO);
+  const filtered = transactions.filter((t) => t.type === type && !t.investmentTxId && t.date >= fromISO && t.date <= toISO);
   const total = filtered.reduce((s, t) => s + t.amount, 0);
 
   const roots = categories.filter((c) => c.kind === type && !c.parentId && !c.archived && !c.system);
