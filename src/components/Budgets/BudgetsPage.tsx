@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useStore } from '../../store/useStore';
+import type { CategoryKind } from '../../types';
 import { formatCurrency, MONTH_NAMES_IT, MONTH_NAMES_SHORT_IT } from '../../utils/format';
 import { getCategoryAndDescendantIds } from '../../utils/ledger';
 import { CategoryIconCircle } from '../common/CategoryBadge';
@@ -32,51 +33,81 @@ function actualForCategory(
     .reduce((s, t) => s + t.amount, 0);
 }
 
-function MonthlyBudgetView({ year, month }: { year: number; month: number }) {
+/** Testi ed etichette specifici per un budget di uscita ("quanto posso spendere") o una
+ * stima di entrata ("quanto prevedo di incassare"): la logica di calcolo è la stessa,
+ * cambiano solo le etichette e il verso in cui uno scostamento è considerato negativo. */
+const SECTION_COPY: Record<CategoryKind, { title: string; amountLabel: string; actualLabel: string; diffLabel: string; emptyHint: string }> = {
+  expense: {
+    title: 'Uscite',
+    amountLabel: 'Budget',
+    actualLabel: 'Speso',
+    diffLabel: 'Residuo',
+    emptyHint: 'Crea prima delle categorie di uscita per impostare un budget.',
+  },
+  income: {
+    title: 'Entrate (stima)',
+    amountLabel: 'Stima',
+    actualLabel: 'Incassato',
+    diffLabel: 'Differenza',
+    emptyHint: 'Crea prima delle categorie di entrata per impostare una stima.',
+  },
+};
+
+/** True se lo scostamento tra previsto ed effettivo va segnalato (rosso): per le uscite
+ * quando si spende più del budget, per le entrate quando si incassa meno della stima. */
+function isConcerning(kind: CategoryKind, amount: number, actual: number): boolean {
+  return kind === 'expense' ? amount > 0 && actual > amount : amount > 0 && actual < amount;
+}
+
+function CategoryBudgetSection({ kind, year, month }: { kind: CategoryKind; year: number; month: number }) {
   const categories = useStore((s) => s.categories);
   const transactions = useStore((s) => s.transactions);
   const budgets = useStore((s) => s.budgets);
   const setBudget = useStore((s) => s.setBudget);
+  const copy = SECTION_COPY[kind];
 
-  const expenseRoots = categories.filter((c) => c.kind === 'expense' && !c.parentId && !c.archived && !c.system);
+  const roots = categories.filter((c) => c.kind === kind && !c.parentId && !c.archived && !c.system);
 
-  const totalBudget = expenseRoots.reduce(
+  const totalAmount = roots.reduce(
     (s, c) => s + (budgets.find((b) => b.categoryId === c.id && b.year === year && b.month === month)?.amount ?? 0),
     0
   );
-  const totalActual = expenseRoots.reduce((s, c) => s + actualForCategory(transactions, categories, c.id, year, month), 0);
+  const totalActual = roots.reduce((s, c) => s + actualForCategory(transactions, categories, c.id, year, month), 0);
+  const totalDiff = kind === 'expense' ? totalAmount - totalActual : totalActual - totalAmount;
 
   return (
     <div className="space-y-3">
+      <h2 className="text-sm font-semibold text-slate-700">{copy.title}</h2>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="card">
-          <span className="text-xs text-slate-400 uppercase">Budget totale</span>
-          <div className="text-xl font-semibold text-slate-800">{formatCurrency(totalBudget)}</div>
+          <span className="text-xs text-slate-400 uppercase">{copy.amountLabel} totale</span>
+          <div className="text-xl font-semibold text-slate-800">{formatCurrency(totalAmount)}</div>
         </div>
         <div className="card">
-          <span className="text-xs text-slate-400 uppercase">Speso</span>
-          <div className="text-xl font-semibold text-red-600">{formatCurrency(totalActual)}</div>
+          <span className="text-xs text-slate-400 uppercase">{copy.actualLabel}</span>
+          <div className={`text-xl font-semibold ${kind === 'expense' ? 'text-red-600' : 'text-emerald-600'}`}>
+            {formatCurrency(totalActual)}
+          </div>
         </div>
         <div className="card">
-          <span className="text-xs text-slate-400 uppercase">Residuo</span>
-          <div className={`text-xl font-semibold ${totalBudget - totalActual >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-            {formatCurrency(totalBudget - totalActual)}
+          <span className="text-xs text-slate-400 uppercase">{copy.diffLabel}</span>
+          <div className={`text-xl font-semibold ${totalDiff >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+            {formatCurrency(totalDiff)}
           </div>
         </div>
       </div>
 
-      {expenseRoots.length === 0 && (
-        <div className="card text-center text-slate-400 py-6">Crea prima delle categorie di uscita per impostare un budget.</div>
-      )}
+      {roots.length === 0 && <div className="card text-center text-slate-400 py-6">{copy.emptyHint}</div>}
 
       {/* Vista a card: sotto sm */}
       <div className="sm:hidden space-y-2">
-        {expenseRoots.map((cat) => {
+        {roots.map((cat) => {
           const budget = budgets.find((b) => b.categoryId === cat.id && b.year === year && b.month === month);
           const actual = actualForCategory(transactions, categories, cat.id, year, month);
           const amount = budget?.amount ?? 0;
           const pct = amount > 0 ? Math.min(100, (actual / amount) * 100) : actual > 0 ? 100 : 0;
-          const over = amount > 0 && actual > amount;
+          const concerning = isConcerning(kind, amount, actual);
+          const diff = kind === 'expense' ? amount - actual : actual - amount;
           return (
             <div key={cat.id} className="card">
               <div className="flex items-center justify-between gap-3">
@@ -95,13 +126,15 @@ function MonthlyBudgetView({ year, month }: { year: number; month: number }) {
                 />
               </div>
               <div className="flex items-center justify-between mt-2 text-sm">
-                <span className="text-slate-500">Speso: {formatCurrency(actual)}</span>
-                <span className={`font-medium ${amount - actual >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                  Residuo: {formatCurrency(amount - actual)}
+                <span className="text-slate-500">
+                  {copy.actualLabel}: {formatCurrency(actual)}
+                </span>
+                <span className={`font-medium ${diff >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  {copy.diffLabel}: {formatCurrency(diff)}
                 </span>
               </div>
               <div className="h-2 rounded-full bg-slate-100 overflow-hidden mt-2">
-                <div className={`h-full rounded-full ${over ? 'bg-red-500' : 'bg-emerald-500'}`} style={{ width: `${pct}%` }} />
+                <div className={`h-full rounded-full ${concerning ? 'bg-red-500' : 'bg-emerald-500'}`} style={{ width: `${pct}%` }} />
               </div>
             </div>
           );
@@ -114,19 +147,20 @@ function MonthlyBudgetView({ year, month }: { year: number; month: number }) {
           <thead>
             <tr>
               <th>Categoria</th>
-              <th className="text-right">Budget</th>
-              <th className="text-right">Speso</th>
-              <th className="text-right">Residuo</th>
+              <th className="text-right">{copy.amountLabel}</th>
+              <th className="text-right">{copy.actualLabel}</th>
+              <th className="text-right">{copy.diffLabel}</th>
               <th>Andamento</th>
             </tr>
           </thead>
           <tbody>
-            {expenseRoots.map((cat) => {
+            {roots.map((cat) => {
               const budget = budgets.find((b) => b.categoryId === cat.id && b.year === year && b.month === month);
               const actual = actualForCategory(transactions, categories, cat.id, year, month);
               const amount = budget?.amount ?? 0;
               const pct = amount > 0 ? Math.min(100, (actual / amount) * 100) : actual > 0 ? 100 : 0;
-              const over = amount > 0 && actual > amount;
+              const concerning = isConcerning(kind, amount, actual);
+              const diff = kind === 'expense' ? amount - actual : actual - amount;
               return (
                 <tr key={cat.id}>
                   <td className="font-medium text-slate-700">
@@ -147,15 +181,10 @@ function MonthlyBudgetView({ year, month }: { year: number; month: number }) {
                     />
                   </td>
                   <td className="text-right text-slate-600">{formatCurrency(actual)}</td>
-                  <td className={`text-right font-medium ${amount - actual >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                    {formatCurrency(amount - actual)}
-                  </td>
+                  <td className={`text-right font-medium ${diff >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{formatCurrency(diff)}</td>
                   <td className="min-w-[120px]">
                     <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${over ? 'bg-red-500' : 'bg-emerald-500'}`}
-                        style={{ width: `${pct}%` }}
-                      />
+                      <div className={`h-full rounded-full ${concerning ? 'bg-red-500' : 'bg-emerald-500'}`} style={{ width: `${pct}%` }} />
                     </div>
                   </td>
                 </tr>
@@ -168,14 +197,80 @@ function MonthlyBudgetView({ year, month }: { year: number; month: number }) {
   );
 }
 
-function AnnualBudgetView({ year }: { year: number }) {
+function ForecastCard({ year, month }: { year: number; month: number }) {
   const categories = useStore((s) => s.categories);
   const transactions = useStore((s) => s.transactions);
   const budgets = useStore((s) => s.budgets);
 
-  const expenseRoots = categories.filter((c) => c.kind === 'expense' && !c.parentId && !c.archived && !c.system);
+  const totalFor = (kind: CategoryKind) =>
+    categories
+      .filter((c) => c.kind === kind && !c.parentId && !c.archived && !c.system)
+      .reduce((s, c) => s + (budgets.find((b) => b.categoryId === c.id && b.year === year && b.month === month)?.amount ?? 0), 0);
 
-  const rows = expenseRoots.map((cat) => {
+  const actualFor = (kind: CategoryKind) =>
+    categories
+      .filter((c) => c.kind === kind && !c.parentId && !c.archived && !c.system)
+      .reduce((s, c) => s + actualForCategory(transactions, categories, c.id, year, month), 0);
+
+  const stimaEntrate = totalFor('income');
+  const budgetUscite = totalFor('expense');
+  const risparmioPrevisto = stimaEntrate - budgetUscite;
+  const risparmioReale = actualFor('income') - actualFor('expense');
+
+  return (
+    <div className="card flex flex-wrap items-center justify-between gap-3 bg-primary-50 border-primary-100">
+      <div>
+        <span className="text-xs text-primary-700 uppercase font-medium">Risparmio previsto</span>
+        <div className={`text-xl font-semibold ${risparmioPrevisto >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+          {formatCurrency(risparmioPrevisto)}
+        </div>
+        <p className="text-xs text-primary-700/70">Stima entrate − budget uscite</p>
+      </div>
+      <div className="text-right">
+        <span className="text-xs text-primary-700 uppercase font-medium">Risparmio reale (finora)</span>
+        <div className={`text-xl font-semibold ${risparmioReale >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+          {formatCurrency(risparmioReale)}
+        </div>
+        <p className="text-xs text-primary-700/70">Incassato − speso</p>
+      </div>
+    </div>
+  );
+}
+
+function MonthlyBudgetView({ year, month }: { year: number; month: number }) {
+  return (
+    <div className="space-y-6">
+      <ForecastCard year={year} month={month} />
+      <CategoryBudgetSection kind="expense" year={year} month={month} />
+      <CategoryBudgetSection kind="income" year={year} month={month} />
+    </div>
+  );
+}
+
+const ANNUAL_SECTION_COPY: Record<CategoryKind, { title: string; totalAmountLabel: string; totalActualLabel: string; emptyHint: string }> = {
+  expense: {
+    title: 'Uscite',
+    totalAmountLabel: 'Budget annuale totale',
+    totalActualLabel: "Speso nell'anno",
+    emptyHint: 'Nessuna categoria di uscita disponibile.',
+  },
+  income: {
+    title: 'Entrate (stima)',
+    totalAmountLabel: 'Stima annuale totale',
+    totalActualLabel: "Incassato nell'anno",
+    emptyHint: 'Nessuna categoria di entrata disponibile.',
+  },
+};
+
+function AnnualCategorySection({ kind, year }: { kind: CategoryKind; year: number }) {
+  const categories = useStore((s) => s.categories);
+  const transactions = useStore((s) => s.transactions);
+  const budgets = useStore((s) => s.budgets);
+  const copy = ANNUAL_SECTION_COPY[kind];
+
+  const roots = categories.filter((c) => c.kind === kind && !c.parentId && !c.archived && !c.system);
+
+  const rows = roots.map((cat) => {
     const monthly = Array.from({ length: 12 }, (_, i) => {
       const m = i + 1;
       const b = budgets.find((x) => x.categoryId === cat.id && x.year === year && x.month === m)?.amount ?? 0;
@@ -189,36 +284,36 @@ function AnnualBudgetView({ year }: { year: number }) {
 
   const grandBudget = rows.reduce((s, r) => s + r.annualBudget, 0);
   const grandActual = rows.reduce((s, r) => s + r.annualActual, 0);
+  const grandDiff = kind === 'expense' ? grandBudget - grandActual : grandActual - grandBudget;
 
   return (
     <div className="space-y-3">
+      <h2 className="text-sm font-semibold text-slate-700">{copy.title}</h2>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="card">
-          <span className="text-xs text-slate-400 uppercase">Budget annuale totale</span>
+          <span className="text-xs text-slate-400 uppercase">{copy.totalAmountLabel}</span>
           <div className="text-xl font-semibold text-slate-800">{formatCurrency(grandBudget)}</div>
-          <span className="text-[11px] text-slate-400">Somma dei budget mensili di {year}</span>
+          <span className="text-[11px] text-slate-400">Somma dei valori mensili di {year}</span>
         </div>
         <div className="card">
-          <span className="text-xs text-slate-400 uppercase">Speso nell'anno</span>
-          <div className="text-xl font-semibold text-red-600">{formatCurrency(grandActual)}</div>
-        </div>
-        <div className="card">
-          <span className="text-xs text-slate-400 uppercase">Residuo annuale</span>
-          <div className={`text-xl font-semibold ${grandBudget - grandActual >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-            {formatCurrency(grandBudget - grandActual)}
+          <span className="text-xs text-slate-400 uppercase">{copy.totalActualLabel}</span>
+          <div className={`text-xl font-semibold ${kind === 'expense' ? 'text-red-600' : 'text-emerald-600'}`}>
+            {formatCurrency(grandActual)}
           </div>
+        </div>
+        <div className="card">
+          <span className="text-xs text-slate-400 uppercase">{kind === 'expense' ? 'Residuo annuale' : 'Differenza annuale'}</span>
+          <div className={`text-xl font-semibold ${grandDiff >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{formatCurrency(grandDiff)}</div>
         </div>
       </div>
 
-      {rows.length === 0 && (
-        <div className="card text-center text-slate-400 py-6">Nessuna categoria di uscita disponibile.</div>
-      )}
+      {rows.length === 0 && <div className="card text-center text-slate-400 py-6">{copy.emptyHint}</div>}
 
       {/* Vista a card: sotto sm, riepilogo annuale per categoria */}
       <div className="sm:hidden space-y-2">
         {rows.map(({ cat, annualBudget, annualActual }) => {
           const pct = annualBudget > 0 ? Math.min(100, (annualActual / annualBudget) * 100) : annualActual > 0 ? 100 : 0;
-          const over = annualBudget > 0 && annualActual > annualBudget;
+          const concerning = isConcerning(kind, annualBudget, annualActual);
           return (
             <div key={cat.id} className="card">
               <div className="flex items-center justify-between gap-3">
@@ -226,17 +321,19 @@ function AnnualBudgetView({ year }: { year: number }) {
                   <CategoryIconCircle category={cat} />
                   <span className="truncate">{cat.name}</span>
                 </span>
-                <span className="text-sm text-slate-500 shrink-0">{formatCurrency(annualBudget)} budget</span>
+                <span className="text-sm text-slate-500 shrink-0">{formatCurrency(annualBudget)}</span>
               </div>
               <div className="flex items-center justify-between mt-2 text-sm">
-                <span className="text-slate-500">Speso nell'anno: {formatCurrency(annualActual)}</span>
-                <span className={`font-medium ${over ? 'text-red-600' : 'text-emerald-600'}`}>
-                  {over ? '+' : ''}
+                <span className="text-slate-500">
+                  {ANNUAL_SECTION_COPY[kind].totalActualLabel}: {formatCurrency(annualActual)}
+                </span>
+                <span className={`font-medium ${concerning ? 'text-red-600' : 'text-emerald-600'}`}>
+                  {annualActual - annualBudget >= 0 ? '+' : ''}
                   {formatCurrency(annualActual - annualBudget)}
                 </span>
               </div>
               <div className="h-2 rounded-full bg-slate-100 overflow-hidden mt-2">
-                <div className={`h-full rounded-full ${over ? 'bg-red-500' : 'bg-emerald-500'}`} style={{ width: `${pct}%` }} />
+                <div className={`h-full rounded-full ${concerning ? 'bg-red-500' : 'bg-emerald-500'}`} style={{ width: `${pct}%` }} />
               </div>
             </div>
           );
@@ -259,8 +356,8 @@ function AnnualBudgetView({ year }: { year: number }) {
                   {m}
                 </th>
               ))}
-              <th className="text-right">Tot. Budget</th>
-              <th className="text-right">Tot. Speso</th>
+              <th className="text-right">Tot. {kind === 'expense' ? 'Budget' : 'Stima'}</th>
+              <th className="text-right">Tot. {kind === 'expense' ? 'Speso' : 'Incassato'}</th>
             </tr>
           </thead>
           <tbody>
@@ -275,13 +372,13 @@ function AnnualBudgetView({ year }: { year: number }) {
                 {monthly.map((m, i) => (
                   <td key={i} className="text-right text-xs">
                     <div className="text-slate-400">{formatCurrency(m.budget)}</div>
-                    <div className={m.actual > m.budget && m.budget > 0 ? 'text-red-600 font-medium' : 'text-slate-600'}>
+                    <div className={isConcerning(kind, m.budget, m.actual) ? 'text-red-600 font-medium' : 'text-slate-600'}>
                       {formatCurrency(m.actual)}
                     </div>
                   </td>
                 ))}
                 <td className="text-right font-semibold">{formatCurrency(annualBudget)}</td>
-                <td className={`text-right font-semibold ${annualActual > annualBudget && annualBudget > 0 ? 'text-red-600' : 'text-slate-700'}`}>
+                <td className={`text-right font-semibold ${isConcerning(kind, annualBudget, annualActual) ? 'text-red-600' : 'text-slate-700'}`}>
                   {formatCurrency(annualActual)}
                 </td>
               </tr>
@@ -290,9 +387,18 @@ function AnnualBudgetView({ year }: { year: number }) {
         </table>
       </div>
       <p className="hidden sm:block text-xs text-slate-400">
-        Ogni cella mensile mostra il budget impostato (in grigio) e la spesa effettiva (sotto). Il totale annuale è la somma
-        dei 12 budget mensili.
+        Ogni cella mensile mostra il valore impostato (in grigio) e {kind === 'expense' ? 'la spesa effettiva' : "l'incasso effettivo"}{' '}
+        (sotto). Il totale annuale è la somma dei 12 valori mensili.
       </p>
+    </div>
+  );
+}
+
+function AnnualBudgetView({ year }: { year: number }) {
+  return (
+    <div className="space-y-6">
+      <AnnualCategorySection kind="expense" year={year} />
+      <AnnualCategorySection kind="income" year={year} />
     </div>
   );
 }
@@ -308,7 +414,7 @@ export function BudgetsPage() {
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h1 className="text-xl font-semibold text-slate-800">Budget</h1>
-          <p className="text-sm text-slate-500">Imposta i budget per categoria, mensili e annuali.</p>
+          <p className="text-sm text-slate-500">Imposta i budget di uscita e le stime di entrata per categoria, mensili e annuali.</p>
         </div>
         <div className="flex gap-2">
           <div className="flex rounded-lg overflow-hidden border border-slate-200">
