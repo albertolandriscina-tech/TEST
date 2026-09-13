@@ -342,7 +342,7 @@ export function AnalysisPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-semibold text-slate-800">Analisi entrate e uscite</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-slate-800">Analisi entrate e uscite</h1>
         <p className="text-sm text-slate-500">
           Analisi approfondita di tutti i movimenti, per categoria e nel tempo, calcolata a flusso di cassa: conta
           quando il denaro entra o esce davvero dai conti di liquidità/conto corrente (comprese le uscite verso

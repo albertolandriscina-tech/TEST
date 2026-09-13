@@ -73,7 +73,7 @@ export function BalanceSheetPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-semibold text-slate-800">Bilancio e quadratura</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-slate-800">Bilancio e quadratura</h1>
         <p className="text-sm text-slate-500">
           Conto economico e stato patrimoniale, con controllo di quadratura della partita doppia.
         </p>

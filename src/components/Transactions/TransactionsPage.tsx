@@ -56,7 +56,7 @@ export function TransactionsPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-slate-800">Movimenti</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-800">Movimenti</h1>
           <p className="text-sm text-slate-500">
             Inserisci solo l'importo positivo: entrata/uscita/giroconto vengono riconosciuti automaticamente.
           </p>

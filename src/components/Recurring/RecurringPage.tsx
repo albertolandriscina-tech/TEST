@@ -31,7 +31,7 @@ export function RecurringPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h1 className="text-xl font-semibold text-slate-800">Movimenti ricorrenti</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-800">Movimenti ricorrenti</h1>
           <p className="text-sm text-slate-500">
             Definisci entrate, uscite o giroconti che si ripetono; verranno generati automaticamente all'apertura dell'app.
           </p>

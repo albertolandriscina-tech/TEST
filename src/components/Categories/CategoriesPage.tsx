@@ -280,7 +280,7 @@ export function CategoriesPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-semibold text-slate-800">Categorie</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-slate-800">Categorie</h1>
         <p className="text-sm text-slate-500">Organizza entrate e uscite in categorie e sottocategorie.</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

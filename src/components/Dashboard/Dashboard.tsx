@@ -45,7 +45,7 @@ export function Dashboard() {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h1 className="text-xl font-semibold text-slate-800">Dashboard</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-800">Dashboard</h1>
           <p className="text-sm text-slate-500">Andamento mensile di entrate, uscite e patrimonio complessivo.</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">

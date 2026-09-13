@@ -12,6 +12,7 @@ export interface ColorScale {
 }
 
 export const COLOR_THEME_SCALES: Record<ColorTheme, ColorScale> = {
+  teal: { 50: '#f0fdfa', 100: '#ccfbf1', 200: '#99f6e4', 400: '#2dd4bf', 500: '#14b8a6', 600: '#0d9488', 700: '#0f766e', 950: '#042f2c' },
   indigo: { 50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe', 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 950: '#1e1b4b' },
   blue: { 50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 950: '#172554' },
   green: { 50: '#ecfdf5', 100: '#d1fae5', 200: '#a7f3d0', 400: '#34d399', 500: '#10b981', 600: '#059669', 700: '#047857', 950: '#022c22' },
@@ -26,7 +27,7 @@ export function getAccentColor(theme: ColorTheme): string {
 }
 
 export const FONT_STACKS: Record<FontFamily, string> = {
-  system: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"`,
+  system: `"Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"`,
   serif: `Georgia, Cambria, "Times New Roman", Times, serif`,
   alt: `Verdana, Geneva, Tahoma, sans-serif`,
   mono: `ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace`,

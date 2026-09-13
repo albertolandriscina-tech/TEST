@@ -428,7 +428,7 @@ export function BudgetsPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h1 className="text-xl font-semibold text-slate-800">Budget</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-800">Budget</h1>
           <p className="text-sm text-slate-500">Imposta i budget di uscita e le stime di entrata per categoria, mensili e annuali.</p>
         </div>
         <div className="flex gap-2">

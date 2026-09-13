@@ -24,7 +24,7 @@ export function SettingsPage() {
   return (
     <div className="space-y-4 max-w-3xl">
       <div>
-        <h1 className="text-xl font-semibold text-slate-800">Impostazioni</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-slate-800">Impostazioni</h1>
         <p className="text-sm text-slate-500">Personalizza l'aspetto dell'app e la valuta usata in tutti i calcoli e i report.</p>
       </div>
 

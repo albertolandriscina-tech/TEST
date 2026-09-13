@@ -73,7 +73,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center text-white shrink-0">
               <Wallet size={18} />
             </div>
-            <span className="font-semibold text-slate-800 truncate">Finanza Personale</span>
+            <span className="font-extrabold tracking-tight text-slate-800 truncate">Finanza Personale</span>
           </div>
           <button className="btn-ghost !p-1.5 lg:hidden" onClick={onClose} aria-label="Chiudi menu">
             <X size={18} />
@@ -88,7 +88,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               onClick={onClose}
               className={({ isActive }) =>
                 `flex items-center gap-2.5 px-3 py-2.5 lg:py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive ? 'bg-primary-50 text-primary-700' : 'text-slate-600 hover:bg-slate-100'
+                  isActive ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'
                 }`
               }
             >

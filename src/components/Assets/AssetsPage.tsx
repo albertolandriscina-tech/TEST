@@ -29,7 +29,7 @@ export function AssetsPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-slate-800">Patrimonio</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-800">Patrimonio</h1>
           <p className="text-sm text-slate-500">Auto, immobili e altri beni che contribuiscono al patrimonio netto.</p>
         </div>
         <button className="btn-primary" onClick={() => setShowForm(true)}>

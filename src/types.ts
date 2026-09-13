@@ -287,9 +287,10 @@ export const APP_THEME_LABELS: Record<AppTheme, string> = {
   system: 'Automatico (sistema)',
 };
 
-export type ColorTheme = 'indigo' | 'blue' | 'green' | 'violet' | 'rose' | 'amber';
+export type ColorTheme = 'teal' | 'indigo' | 'blue' | 'green' | 'violet' | 'rose' | 'amber';
 
 export const COLOR_THEME_LABELS: Record<ColorTheme, string> = {
+  teal: 'Teal',
   indigo: 'Indaco',
   blue: 'Blu',
   green: 'Verde',
@@ -316,7 +317,7 @@ export interface AppSettings {
 
 export const DEFAULT_SETTINGS: AppSettings = {
   theme: 'system',
-  colorTheme: 'indigo',
+  colorTheme: 'teal',
   fontFamily: 'system',
   currency: 'EUR',
 };
