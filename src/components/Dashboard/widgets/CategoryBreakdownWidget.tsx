@@ -1,14 +1,12 @@
 import { useMemo } from 'react';
 import { endOfMonth, format, startOfMonth, subMonths } from 'date-fns';
 import { ArrowDownRight, ArrowUpRight, Minus } from 'lucide-react';
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { useStore } from '../../../store/useStore';
 import { buildCategoryBreakdown, pctDelta } from '../../../utils/analytics';
-import { formatCompactCurrency, formatCurrency, formatNumber } from '../../../utils/format';
+import { formatCurrency, formatNumber } from '../../../utils/format';
 import { CategoryIconCircle } from '../../common/CategoryBadge';
 
 const MAX_SLICES = 6;
-const OTHER_COLOR = '#94a3b8';
 
 function monthRange(d: Date) {
   return { fromISO: format(startOfMonth(d), 'yyyy-MM-dd'), toISO: format(endOfMonth(d), 'yyyy-MM-dd') };
@@ -54,14 +52,6 @@ export function CategoryBreakdownWidget() {
     };
   }, [currentBreakdown]);
 
-  const chartData = useMemo(
-    () => [
-      ...legendItems.map((d) => ({ name: d.category.name, value: d.amount, color: d.category.color ?? OTHER_COLOR })),
-      ...(otherValue > 0 ? [{ name: 'Altri', value: otherValue, color: OTHER_COLOR }] : []),
-    ],
-    [legendItems, otherValue]
-  );
-
   const delta = pctDelta(total, previousTotal);
 
   if (currentBreakdown.length === 0) {
@@ -72,29 +62,11 @@ export function CategoryBreakdownWidget() {
     <div className="flex flex-col h-full gap-3">
       <div className="flex items-center justify-between text-xs text-slate-500">
         <span>
-          Tutte le categorie · <span className="font-medium text-slate-700">{formatCompactCurrency(-total)}</span>
+          Tutte le categorie · <span className="font-medium text-slate-700">{formatCurrency(-total)}</span>
         </span>
         <span className="flex items-center gap-1 text-slate-400">
           vs mese prec. <MiniDelta value={delta} />
         </span>
-      </div>
-
-      <div className="flex justify-center shrink-0">
-        <div className="relative w-40 h-40">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie data={chartData} dataKey="value" nameKey="name" innerRadius="60%" outerRadius="100%" paddingAngle={2} stroke="none">
-                {chartData.map((d, i) => (
-                  <Cell key={i} fill={d.color} />
-                ))}
-              </Pie>
-              <Tooltip formatter={(v: number) => formatCurrency(v)} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-4">
-            <span className="text-xs text-slate-400 leading-tight text-center">Tutte le categorie</span>
-          </div>
-        </div>
       </div>
 
       <ul className="flex-1 overflow-auto space-y-2 min-h-0">
