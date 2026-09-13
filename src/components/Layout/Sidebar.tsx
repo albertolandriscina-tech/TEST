@@ -15,9 +15,12 @@ import {
   Wallet,
   Sparkles,
   Eraser,
+  LogOut,
   X,
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
+import { useAuthStore } from '../../store/authStore';
+import { useSyncStatus } from '../../store/syncStatus';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 
 const navItems = [
@@ -39,11 +42,23 @@ interface SidebarProps {
   onClose: () => void;
 }
 
+const SYNC_LABELS: Record<string, string> = {
+  idle: '',
+  loading: 'Caricamento…',
+  saving: 'Salvataggio…',
+  saved: 'Dati sincronizzati',
+  error: 'Errore di sincronizzazione',
+};
+
 export function Sidebar({ open, onClose }: SidebarProps) {
   const loadDemoData = useStore((s) => s.loadDemoData);
   const resetAllData = useStore((s) => s.resetAllData);
+  const user = useAuthStore((s) => s.user);
+  const signOut = useAuthStore((s) => s.signOut);
+  const syncStatus = useSyncStatus((s) => s.status);
   const [confirmDemo, setConfirmDemo] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [confirmLogout, setConfirmLogout] = useState(false);
 
   return (
     <>
@@ -98,8 +113,24 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             <span className="truncate">Svuota tutti i dati</span>
           </button>
         </div>
-        <div className="px-4 py-3 border-t border-slate-200 text-[11px] text-slate-400 shrink-0">
-          Dati salvati solo in locale nel browser.
+        <div className="px-2 py-2 border-t border-slate-200 shrink-0">
+          <div className="flex items-center gap-2 px-3 py-1.5">
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-medium text-slate-700 truncate">{user?.email ?? 'Account'}</div>
+              {syncStatus !== 'idle' && (
+                <div className={`text-[11px] ${syncStatus === 'error' ? 'text-red-500' : 'text-slate-400'}`}>
+                  {SYNC_LABELS[syncStatus]}
+                </div>
+              )}
+            </div>
+            <button
+              className="btn-ghost !p-1.5 shrink-0"
+              title="Esci"
+              onClick={() => setConfirmLogout(true)}
+            >
+              <LogOut size={16} />
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -124,6 +155,18 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           onConfirm={() => {
             resetAllData();
             setConfirmReset(false);
+          }}
+        />
+      )}
+      {confirmLogout && (
+        <ConfirmDialog
+          title="Esci dall'account"
+          message="Verrai disconnesso da questo dispositivo. I tuoi dati restano salvati sul tuo account."
+          confirmLabel="Esci"
+          onCancel={() => setConfirmLogout(false)}
+          onConfirm={() => {
+            signOut();
+            setConfirmLogout(false);
           }}
         />
       )}

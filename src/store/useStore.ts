@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import type {
   Account,
   AppSettings,
@@ -96,20 +95,22 @@ interface State {
   updateSettings: (patch: Partial<AppSettings>) => void;
 }
 
-const demoDataset = buildDemoDataset();
-
+// I dati non vengono più inizializzati con il set di esempio né persistiti in
+// localStorage: ogni account ha i propri dati salvati su Supabase (vedi
+// hooks/useCloudSync.ts), che li carica dopo l'autenticazione. Un account
+// nuovo di zecca viene popolato con i dati di esempio dal hook di sincronizzazione,
+// non da qui.
 export const useStore = create<State>()(
-  persist(
-    (set, get) => ({
-      accounts: demoDataset.accounts,
-      categories: demoDataset.categories,
-      transactions: demoDataset.transactions,
-      budgets: demoDataset.budgets,
-      investments: demoDataset.investments,
-      investmentTransactions: demoDataset.investmentTransactions,
-      patrimonioAssets: demoDataset.patrimonioAssets,
-      recurringTransactions: demoDataset.recurringTransactions,
-      portfolioSnapshots: demoDataset.portfolioSnapshots,
+  (set, get) => ({
+      accounts: [],
+      categories: buildDefaultCategories(),
+      transactions: [],
+      budgets: [],
+      investments: [],
+      investmentTransactions: [],
+      patrimonioAssets: [],
+      recurringTransactions: [],
+      portfolioSnapshots: [],
       selectedTransactionIds: [],
       dashboardLayout: buildDefaultLayout(),
       hiddenDashboardWidgets: [],
@@ -436,12 +437,7 @@ export const useStore = create<State>()(
       resetDashboardLayout: () => set({ dashboardLayout: buildDefaultLayout(), hiddenDashboardWidgets: [] }),
 
       updateSettings: (patch) => set((s) => ({ settings: { ...s.settings, ...patch } })),
-    }),
-    {
-      name: 'finanza-personale-storage',
-      version: 1,
-    }
-  )
+    })
 );
 
 export function todayForSeed() {

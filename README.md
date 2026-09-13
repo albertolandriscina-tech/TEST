@@ -7,9 +7,31 @@ movimenti ricorrenti.
 
 ## Stack
 
-React + TypeScript + Vite, Tailwind CSS, Zustand (con persistenza in `localStorage`), Recharts.
+React + TypeScript + Vite, Tailwind CSS, Zustand, Recharts, Supabase (autenticazione + database).
 
-Tutti i dati restano nel browser dell'utente (nessun backend/server).
+Ogni utente ha un proprio account: i dati sono salvati sul server (Postgres, tramite
+Supabase) e accessibili da qualsiasi dispositivo dopo il login.
+
+## Configurazione account (Supabase)
+
+L'app richiede un progetto [Supabase](https://supabase.com) (piano gratuito sufficiente):
+
+1. Crea un nuovo progetto su [supabase.com/dashboard](https://supabase.com/dashboard).
+2. Apri l'**SQL Editor** del progetto ed esegui il contenuto di [`supabase/schema.sql`](supabase/schema.sql)
+   per creare la tabella `user_data` e le policy di sicurezza (ogni utente vede solo i propri dati).
+3. In **Project Settings → API** copia "Project URL" e la chiave "anon public".
+4. Copia `.env.example` in `.env` e compila le due variabili:
+   ```
+   VITE_SUPABASE_URL=https://tuo-progetto.supabase.co
+   VITE_SUPABASE_ANON_KEY=la-tua-chiave-anon
+   ```
+5. Se pubblichi l'app (Vercel, Netlify, GitHub Pages con build a parte, ecc.), imposta le stesse
+   due variabili d'ambiente nella piattaforma di hosting: sono lette a tempo di build da Vite.
+
+Senza queste variabili l'app mostra una schermata di configurazione al posto del login.
+
+Per email di conferma: Supabase richiede di default la conferma via email alla registrazione
+(configurabile in **Authentication → Settings** del progetto).
 
 ## Sviluppo
 

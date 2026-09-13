@@ -13,17 +13,39 @@ import { AssetsPage } from './components/Assets/AssetsPage';
 import { BalanceSheetPage } from './components/BalanceSheet/BalanceSheetPage';
 import { RecurringPage } from './components/Recurring/RecurringPage';
 import { SettingsPage } from './components/Settings/SettingsPage';
+import { AuthPage } from './components/Auth/AuthPage';
 import { useStore } from './store/useStore';
+import { useAuthStore } from './store/authStore';
+import { useSyncStatus } from './store/syncStatus';
+import { useCloudSync } from './hooks/useCloudSync';
+import { isSupabaseConfigured } from './lib/supabaseClient';
 import { applyAppearance } from './utils/theme';
+
+function FullScreenLoader() {
+  return (
+    <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 dark:bg-slate-900">
+      <div className="flex items-center gap-2 text-slate-400 text-sm">
+        <span className="w-4 h-4 rounded-full border-2 border-slate-300 border-t-primary-600 animate-spin" />
+        Caricamento…
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
   const generateDueRecurring = useStore((s) => s.generateDueRecurring);
   const settings = useStore((s) => s.settings);
+  const session = useAuthStore((s) => s.session);
+  const authInitializing = useAuthStore((s) => s.initializing);
+  const syncStatus = useSyncStatus((s) => s.status);
   const [notice, setNotice] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
 
+  useCloudSync();
+
   useEffect(() => {
+    if (!session) return;
     const count = generateDueRecurring();
     if (count > 0) {
       setNotice(`Generati ${count} movimenti ricorrenti dovuti.`);
@@ -31,7 +53,7 @@ export default function App() {
       return () => clearTimeout(t);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [session]);
 
   useEffect(() => {
     setSidebarOpen(false);
@@ -45,6 +67,16 @@ export default function App() {
     mql.addEventListener('change', onChange);
     return () => mql.removeEventListener('change', onChange);
   }, [settings.theme, settings.colorTheme, settings.fontFamily]);
+
+  if (isSupabaseConfigured && authInitializing) {
+    return <FullScreenLoader />;
+  }
+  if (!isSupabaseConfigured || !session) {
+    return <AuthPage />;
+  }
+  if (syncStatus === 'loading') {
+    return <FullScreenLoader />;
+  }
 
   return (
     <div className="flex h-screen w-full overflow-hidden">
