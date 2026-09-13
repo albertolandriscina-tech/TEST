@@ -94,6 +94,16 @@ export interface Investment {
   currentPrice: number;
   note?: string;
   archived?: boolean;
+  lastUpdated?: string; // ISO datetime dell'ultimo aggiornamento quotazione (manuale o simulato)
+}
+
+// ---------- Storico valore di portafoglio (per l'analisi degli investimenti) ----------
+
+export interface PortfolioSnapshot {
+  id: string;
+  date: string; // ISO yyyy-MM-dd
+  totalValue: number;
+  totalCost: number;
 }
 
 export type InvestmentOpType = 'buy' | 'sell';

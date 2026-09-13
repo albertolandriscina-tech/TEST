@@ -9,6 +9,7 @@ import type {
   Investment,
   InvestmentTransaction,
   PatrimonioAsset,
+  PortfolioSnapshot,
   RecurringTransaction,
   Transaction,
 } from '../types';
@@ -17,6 +18,8 @@ import { buildDefaultCategories, SYSTEM_CATEGORY_INVESTMENT_BUY, SYSTEM_CATEGORY
 import { buildDemoDataset } from './demoData';
 import { buildDefaultLayout } from '../dashboardWidgets';
 import { computeDueOccurrences, generateTransactionsForRule } from '../utils/recurring';
+import { computeAllHoldings, round2 } from '../utils/ledger';
+import { refreshPrices } from '../utils/priceSimulation';
 
 interface State {
   accounts: Account[];
@@ -27,6 +30,7 @@ interface State {
   investmentTransactions: InvestmentTransaction[];
   patrimonioAssets: PatrimonioAsset[];
   recurringTransactions: RecurringTransaction[];
+  portfolioSnapshots: PortfolioSnapshot[];
   selectedTransactionIds: string[];
   dashboardLayout: DashboardWidgetLayout[];
   hiddenDashboardWidgets: DashboardWidgetType[];
@@ -61,6 +65,7 @@ interface State {
   deleteInvestment: (id: string) => void;
   addInvestmentTransaction: (op: Omit<InvestmentTransaction, 'id' | 'createdAt'>) => void;
   deleteInvestmentTransaction: (id: string) => void;
+  refreshInvestmentPrices: () => void;
 
   // Patrimonio
   addAsset: (a: Omit<PatrimonioAsset, 'id'>) => void;
@@ -97,6 +102,7 @@ export const useStore = create<State>()(
       investmentTransactions: demoDataset.investmentTransactions,
       patrimonioAssets: demoDataset.patrimonioAssets,
       recurringTransactions: demoDataset.recurringTransactions,
+      portfolioSnapshots: demoDataset.portfolioSnapshots,
       selectedTransactionIds: [],
       dashboardLayout: buildDefaultLayout(),
       hiddenDashboardWidgets: [],
@@ -270,6 +276,31 @@ export const useStore = create<State>()(
           transactions: s.transactions.filter((t) => t.investmentTxId !== id),
         })),
 
+      refreshInvestmentPrices: () =>
+        set((s) => {
+          const active = s.investments.filter((i) => !i.archived);
+          const updated = refreshPrices(active);
+          const updatedMap = new Map(updated.map((u) => [u.id, u]));
+          const investments = s.investments.map((i) => updatedMap.get(i.id) ?? i);
+
+          const holdings = computeAllHoldings(
+            investments.filter((i) => !i.archived),
+            s.investmentTransactions
+          );
+          const totalValue = round2(holdings.reduce((sum, h) => sum + h.currentValue, 0));
+          const totalCost = round2(holdings.reduce((sum, h) => sum + h.costBasis, 0));
+          const today = new Date().toISOString().slice(0, 10);
+          const existingIdx = s.portfolioSnapshots.findIndex((snap) => snap.date === today);
+          const portfolioSnapshots =
+            existingIdx >= 0
+              ? s.portfolioSnapshots.map((snap, idx) =>
+                  idx === existingIdx ? { ...snap, totalValue, totalCost } : snap
+                )
+              : [...s.portfolioSnapshots, { id: newId(), date: today, totalValue, totalCost }];
+
+          return { investments, portfolioSnapshots };
+        }),
+
       addAsset: (a) => set((s) => ({ patrimonioAssets: [...s.patrimonioAssets, { ...a, id: newId() }] })),
       updateAsset: (id, patch) =>
         set((s) => ({
@@ -328,6 +359,7 @@ export const useStore = create<State>()(
           investmentTransactions: [],
           patrimonioAssets: [],
           recurringTransactions: [],
+          portfolioSnapshots: [],
           selectedTransactionIds: [],
         }),
 
@@ -342,6 +374,7 @@ export const useStore = create<State>()(
           investmentTransactions: demo.investmentTransactions,
           patrimonioAssets: demo.patrimonioAssets,
           recurringTransactions: demo.recurringTransactions,
+          portfolioSnapshots: demo.portfolioSnapshots,
           selectedTransactionIds: [],
           dashboardLayout: buildDefaultLayout(),
           hiddenDashboardWidgets: [],

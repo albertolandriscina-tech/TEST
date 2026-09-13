@@ -6,11 +6,13 @@ import type {
   Investment,
   InvestmentTransaction,
   PatrimonioAsset,
+  PortfolioSnapshot,
   RecurringTransaction,
   Transaction,
 } from '../types';
 import { newId } from '../utils/id';
 import { buildDefaultCategories, SYSTEM_CATEGORY_INVESTMENT_BUY, SYSTEM_CATEGORY_INVESTMENT_SELL } from './seed';
+import { computeAllHoldings, round2 } from '../utils/ledger';
 
 function iso(d: Date): string {
   return format(d, 'yyyy-MM-dd');
@@ -25,6 +27,7 @@ export interface DemoDataset {
   investmentTransactions: InvestmentTransaction[];
   patrimonioAssets: PatrimonioAsset[];
   recurringTransactions: RecurringTransaction[];
+  portfolioSnapshots: PortfolioSnapshot[];
 }
 
 /** Dataset di esempio realistico (12 mesi di storico) per mostrare l'app già popolata. */
@@ -200,5 +203,42 @@ export function buildDemoDataset(): DemoDataset {
     },
   ];
 
-  return { categories, accounts, transactions, budgets, investments, investmentTransactions, patrimonioAssets, recurringTransactions };
+  // ---- Storico valore di portafoglio (per la sezione "Analisi") ----
+  // Non avendo quotazioni storiche reali, si ricostruisce un andamento plausibile
+  // ancorato al valore corrente realmente calcolato, con il capitale investito
+  // che cresce mese per mese secondo i versamenti effettuati (PAC).
+  const currentHoldings = computeAllHoldings(investments, investmentTransactions);
+  const currentTotalValue = round2(currentHoldings.reduce((s, h) => s + h.currentValue, 0));
+  const currentTotalCost = round2(currentHoldings.reduce((s, h) => s + h.costBasis, 0));
+  const portfolioSnapshots: PortfolioSnapshot[] = [];
+  for (let i = 9; i >= 0; i--) {
+    const d = iso(subMonths(now, i));
+    const costFactor = i === 0 ? 1 : Math.max(0.15, 1 - i * 0.11);
+    const valueWobble = 1 + Math.sin(i * 1.3) * 0.015;
+    const growthFactor = i === 0 ? 1 : Math.max(0.5, 1 - i * 0.045) * valueWobble;
+    portfolioSnapshots.push({
+      id: newId(),
+      date: d,
+      totalValue: round2(currentTotalValue * growthFactor),
+      totalCost: round2(currentTotalCost * costFactor),
+    });
+  }
+  portfolioSnapshots[portfolioSnapshots.length - 1] = {
+    id: newId(),
+    date: nowISO,
+    totalValue: currentTotalValue,
+    totalCost: currentTotalCost,
+  };
+
+  return {
+    categories,
+    accounts,
+    transactions,
+    budgets,
+    investments,
+    investmentTransactions,
+    patrimonioAssets,
+    recurringTransactions,
+    portfolioSnapshots,
+  };
 }

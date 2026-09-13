@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
-import { Plus, Trash2, Pencil, ShoppingCart, History } from 'lucide-react';
+import { Plus, Trash2, Pencil, ShoppingCart, History, RefreshCw } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import type { Investment } from '../../types';
 import { INVESTMENT_TYPE_LABELS } from '../../types';
 import { computeAllHoldings } from '../../utils/ledger';
-import { formatCurrency, formatDate, formatNumber } from '../../utils/format';
+import { formatCurrency, formatDate, formatDateTime, formatNumber } from '../../utils/format';
 import { InvestmentForm } from './InvestmentForm';
 import { InvestmentTransactionForm } from './InvestmentTransactionForm';
+import { PortfolioAnalysis } from './PortfolioAnalysis';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { Modal } from '../common/Modal';
 
@@ -14,16 +15,20 @@ export function InvestmentsPage() {
   const investments = useStore((s) => s.investments);
   const investmentTransactions = useStore((s) => s.investmentTransactions);
   const accounts = useStore((s) => s.accounts);
+  const portfolioSnapshots = useStore((s) => s.portfolioSnapshots);
   const addInvestment = useStore((s) => s.addInvestment);
   const updateInvestment = useStore((s) => s.updateInvestment);
   const deleteInvestment = useStore((s) => s.deleteInvestment);
   const deleteInvestmentTransaction = useStore((s) => s.deleteInvestmentTransaction);
+  const refreshInvestmentPrices = useStore((s) => s.refreshInvestmentPrices);
 
+  const [tab, setTab] = useState<'portafoglio' | 'analisi'>('portafoglio');
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Investment | null>(null);
   const [trading, setTrading] = useState<Investment | null>(null);
   const [historyFor, setHistoryFor] = useState<Investment | null>(null);
   const [deleting, setDeleting] = useState<Investment | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const holdings = useMemo(
     () => computeAllHoldings(investments.filter((i) => !i.archived), investmentTransactions),
@@ -36,6 +41,18 @@ export function InvestmentsPage() {
 
   const investmentAccounts = accounts.filter((a) => a.type === 'investment');
 
+  const lastUpdated = investments
+    .map((i) => i.lastUpdated)
+    .filter((d): d is string => !!d)
+    .sort()
+    .pop();
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    refreshInvestmentPrices();
+    window.setTimeout(() => setRefreshing(false), 500);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -43,9 +60,24 @@ export function InvestmentsPage() {
           <h1 className="text-xl font-semibold text-slate-800">Investimenti</h1>
           <p className="text-sm text-slate-500">ETF, fondi, azioni e obbligazioni, con conto corrente titoli dedicato.</p>
         </div>
-        <button className="btn-primary" onClick={() => setShowForm(true)}>
-          <Plus size={16} /> Nuovo strumento
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button className="btn-secondary" onClick={handleRefresh} disabled={holdings.length === 0}>
+            <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} /> Aggiorna quotazioni
+          </button>
+          <button className="btn-primary" onClick={() => setShowForm(true)}>
+            <Plus size={16} /> Nuovo strumento
+          </button>
+        </div>
+      </div>
+
+      <div className="card bg-indigo-50 border-indigo-100 text-indigo-700 text-xs sm:text-sm">
+        L'aggiornamento delle quotazioni è <strong>simulato</strong>: applica un movimento di prezzo realistico
+        (random walk calibrato sulla volatilità tipica di ogni tipologia di strumento), utile per testare
+        l'app senza dipendere da API di mercato esterne o chiavi a pagamento. Puoi comunque impostare in
+        qualsiasi momento un prezzo manuale nelle tabelle qui sotto.
+        {lastUpdated && (
+          <div className="mt-1 text-indigo-500">Ultimo aggiornamento: {formatDateTime(lastUpdated)}</div>
+        )}
       </div>
 
       {investmentAccounts.length === 0 && (
@@ -72,6 +104,29 @@ export function InvestmentsPage() {
         </div>
       </div>
 
+      <div className="flex gap-1 border-b border-slate-200">
+        <button
+          className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
+            tab === 'portafoglio' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+          onClick={() => setTab('portafoglio')}
+        >
+          Portafoglio
+        </button>
+        <button
+          className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
+            tab === 'analisi' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+          onClick={() => setTab('analisi')}
+        >
+          Analisi del portafoglio
+        </button>
+      </div>
+
+      {tab === 'analisi' && <PortfolioAnalysis holdings={holdings} snapshots={portfolioSnapshots} />}
+
+      {tab === 'portafoglio' && (
+      <>
       {holdings.length === 0 && (
         <div className="card text-center text-slate-400 py-6">Nessuno strumento finanziario. Aggiungine uno per iniziare.</div>
       )}
@@ -121,6 +176,9 @@ export function InvestmentsPage() {
                   value={investment.currentPrice}
                   onChange={(e) => updateInvestment(investment.id, { currentPrice: Number(e.target.value) || 0 })}
                 />
+                {investment.lastUpdated && (
+                  <div className="text-[10px] text-slate-400 mt-0.5">{formatDateTime(investment.lastUpdated)}</div>
+                )}
               </div>
               <div>
                 <div className="text-xs text-slate-400">Valore</div>
@@ -167,6 +225,9 @@ export function InvestmentsPage() {
                     value={investment.currentPrice}
                     onChange={(e) => updateInvestment(investment.id, { currentPrice: Number(e.target.value) || 0 })}
                   />
+                  {investment.lastUpdated && (
+                    <div className="text-[10px] text-slate-400 mt-0.5">{formatDateTime(investment.lastUpdated)}</div>
+                  )}
                 </td>
                 <td className="text-right font-medium">{formatCurrency(currentValue)}</td>
                 <td className={`text-right font-medium ${gainLoss >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
@@ -194,6 +255,8 @@ export function InvestmentsPage() {
           </tbody>
         </table>
       </div>
+      </>
+      )}
 
       {showForm && <InvestmentForm onClose={() => setShowForm(false)} onSave={addInvestment} />}
       {editing && (
