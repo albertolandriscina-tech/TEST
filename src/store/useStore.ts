@@ -32,17 +32,18 @@ interface State {
   hiddenDashboardWidgets: DashboardWidgetType[];
 
   // Conti
-  addAccount: (a: Omit<Account, 'id' | 'createdAt'>) => void;
+  addAccount: (a: Omit<Account, 'id' | 'createdAt'>) => string;
   updateAccount: (id: string, patch: Partial<Account>) => void;
   deleteAccount: (id: string) => void;
 
   // Categorie
-  addCategory: (c: Omit<Category, 'id'>) => void;
+  addCategory: (c: Omit<Category, 'id'>) => string;
   updateCategory: (id: string, patch: Partial<Category>) => void;
   deleteCategory: (id: string) => void;
 
   // Movimenti
   addTransaction: (t: Omit<Transaction, 'id' | 'createdAt'>) => void;
+  addTransactions: (list: Omit<Transaction, 'id' | 'createdAt'>[]) => void;
   updateTransaction: (id: string, patch: Partial<Transaction>) => void;
   deleteTransaction: (id: string) => void;
   deleteTransactions: (ids: string[]) => void;
@@ -100,10 +101,13 @@ export const useStore = create<State>()(
       dashboardLayout: buildDefaultLayout(),
       hiddenDashboardWidgets: [],
 
-      addAccount: (a) =>
+      addAccount: (a) => {
+        const id = newId();
         set((s) => ({
-          accounts: [...s.accounts, { ...a, id: newId(), createdAt: new Date().toISOString() }],
-        })),
+          accounts: [...s.accounts, { ...a, id, createdAt: new Date().toISOString() }],
+        }));
+        return id;
+      },
       updateAccount: (id, patch) =>
         set((s) => ({ accounts: s.accounts.map((a) => (a.id === id ? { ...a, ...patch } : a)) })),
       deleteAccount: (id) =>
@@ -112,7 +116,11 @@ export const useStore = create<State>()(
           transactions: s.transactions.filter((t) => t.accountId !== id && t.toAccountId !== id),
         })),
 
-      addCategory: (c) => set((s) => ({ categories: [...s.categories, { ...c, id: newId() }] })),
+      addCategory: (c) => {
+        const id = newId();
+        set((s) => ({ categories: [...s.categories, { ...c, id }] }));
+        return id;
+      },
       updateCategory: (id, patch) =>
         set((s) => ({ categories: s.categories.map((c) => (c.id === id ? { ...c, ...patch } : c)) })),
       deleteCategory: (id) =>
@@ -129,6 +137,13 @@ export const useStore = create<State>()(
           transactions: [
             ...s.transactions,
             { ...t, id: newId(), createdAt: new Date().toISOString() },
+          ],
+        })),
+      addTransactions: (list) =>
+        set((s) => ({
+          transactions: [
+            ...s.transactions,
+            ...list.map((t) => ({ ...t, id: newId(), createdAt: new Date().toISOString() })),
           ],
         })),
       updateTransaction: (id, patch) =>

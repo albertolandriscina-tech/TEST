@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
-import { Plus, Trash2, Pencil, ArrowDownCircle, ArrowUpCircle, ArrowRightLeft } from 'lucide-react';
+import { Plus, Trash2, Pencil, ArrowDownCircle, ArrowUpCircle, ArrowRightLeft, Download, Upload } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import type { Transaction, TransactionType } from '../../types';
 import { formatCurrency, formatDate } from '../../utils/format';
 import { getCategoryPath } from '../../utils/ledger';
+import { downloadTextFile, transactionsToCSV } from '../../utils/csv';
 import { TransactionForm } from './TransactionForm';
+import { ImportTransactionsModal } from './ImportTransactionsModal';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 
 const typeIcon: Record<TransactionType, JSX.Element> = {
@@ -28,6 +30,7 @@ export function TransactionsPage() {
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [deleting, setDeleting] = useState<Transaction | null>(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [showImport, setShowImport] = useState(false);
 
   const [filterAccount, setFilterAccount] = useState('');
   const [filterType, setFilterType] = useState('');
@@ -56,9 +59,24 @@ export function TransactionsPage() {
             Inserisci solo l'importo positivo: entrata/uscita/giroconto vengono riconosciuti automaticamente.
           </p>
         </div>
-        <button className="btn-primary" onClick={() => setShowForm(true)}>
-          <Plus size={16} /> Nuovo movimento
-        </button>
+        <div className="flex gap-2">
+          <button className="btn-secondary" onClick={() => setShowImport(true)}>
+            <Upload size={15} /> Importa CSV
+          </button>
+          <button
+            className="btn-secondary"
+            onClick={() => {
+              const csv = transactionsToCSV(filtered, accounts, categories);
+              downloadTextFile(`movimenti-${new Date().toISOString().slice(0, 10)}.csv`, csv);
+            }}
+            disabled={filtered.length === 0}
+          >
+            <Download size={15} /> Esporta CSV
+          </button>
+          <button className="btn-primary" onClick={() => setShowForm(true)}>
+            <Plus size={16} /> Nuovo movimento
+          </button>
+        </div>
       </div>
 
       <div className="card flex flex-wrap gap-3 items-end">
@@ -186,6 +204,7 @@ export function TransactionsPage() {
         </table>
       </div>
 
+      {showImport && <ImportTransactionsModal onClose={() => setShowImport(false)} />}
       {showForm && <TransactionForm onClose={() => setShowForm(false)} />}
       {editing && <TransactionForm initial={editing} onClose={() => setEditing(null)} />}
       {deleting && (
