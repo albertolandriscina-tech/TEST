@@ -30,7 +30,7 @@ export const WIDGET_DEFINITIONS: Record<DashboardWidgetType, WidgetDefinition> =
   'networth-trend': {
     type: 'networth-trend',
     title: 'Andamento patrimonio netto',
-    defaultLayout: { x: 0, y: 18, w: 6, h: 9, minW: 4, minH: 5 },
+    defaultLayout: { x: 0, y: 18, w: 6, h: 10, minW: 4, minH: 6 },
   },
   budget: {
     type: 'budget',

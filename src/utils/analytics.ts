@@ -6,7 +6,6 @@ import {
   getCategoryAndDescendantIds,
   getEffectiveCategoryNature,
   round2,
-  signedBalanceForNetWorth,
   type InvestmentHolding,
 } from './ledger';
 import { MONTH_NAMES_SHORT_IT } from './format';
@@ -312,14 +311,21 @@ export function buildNatureBreakdown(
 export interface NetWorthPoint {
   key: string;
   label: string;
-  value: number;
+  /** Saldo positivo dei conti (bank/cash/altro), al netto di eventuali conti a saldo negativo (in "debiti"). */
+  conti: number;
+  investimenti: number;
+  asset: number;
+  /** conti + investimenti + asset − debiti (mutuo, carta di credito, saldi negativi). */
+  patrimonioNetto: number;
 }
 
 /**
- * Andamento del patrimonio netto negli ultimi `count` mesi. I saldi dei conti sono
- * ricostruiti alla fine di ogni mese dai movimenti storici; il valore di investimenti
- * e beni patrimoniali è quello attuale (non essendo tracciato uno storico dei prezzi),
- * quindi l'andamento riflette soprattutto l'effetto dei flussi di cassa nel tempo.
+ * Andamento del patrimonio netto negli ultimi `count` mesi, scomposto in Conti/
+ * Investimenti/Asset (per il grafico impilato) più la linea del patrimonio netto (al
+ * netto dei debiti). I saldi dei conti sono ricostruiti alla fine di ogni mese dai
+ * movimenti storici; il valore di investimenti e beni patrimoniali è quello attuale
+ * (non essendo tracciato uno storico dei prezzi), quindi l'andamento riflette
+ * soprattutto l'effetto dei flussi di cassa nel tempo.
  */
 export function buildNetWorthTrend(
   accounts: Account[],
@@ -336,15 +342,21 @@ export function buildNetWorthTrend(
   for (let i = count - 1; i >= 0; i--) {
     const m = subMonths(anchor, i);
     const cutoffISO = format(endOfMonth(m), 'yyyy-MM-dd');
-    let accountsTotal = 0;
+    let liquidita = 0;
+    let debiti = 0;
     for (const acc of accounts) {
       const bal = computeAccountBalance(acc, transactions, cutoffISO);
-      accountsTotal += signedBalanceForNetWorth(acc, bal);
+      if (LIABILITY_ACCOUNT_TYPES.includes(acc.type)) debiti += Math.abs(bal);
+      else if (bal >= 0) liquidita += bal;
+      else debiti += Math.abs(bal);
     }
     points.push({
       key: format(m, 'yyyy-MM'),
       label: `${MONTH_NAMES_SHORT_IT[m.getMonth()]} '${format(m, 'yy')}`,
-      value: accountsTotal + investimentiValue + patrimonioValue,
+      conti: round2(liquidita),
+      investimenti: round2(investimentiValue),
+      asset: round2(patrimonioValue),
+      patrimonioNetto: round2(liquidita - debiti + investimentiValue + patrimonioValue),
     });
   }
   return points;
