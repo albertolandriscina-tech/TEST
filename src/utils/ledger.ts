@@ -30,9 +30,19 @@ export function accountDelta(tx: Transaction, accountId: string): number {
   return delta;
 }
 
-export function computeAccountBalance(account: Account, transactions: Transaction[]): number {
+/**
+ * Saldo di un conto, a partire dal saldo iniziale (alla data indicata, se impostata) più
+ * tutti i movimenti successivi. `asOfISO`, se passato, calcola il saldo "storico" a quella
+ * data invece del saldo corrente: se precedente alla data del saldo iniziale, il conto non
+ * ha ancora un saldo tracciato e contribuisce 0 (utile per grafici di andamento nel tempo).
+ */
+export function computeAccountBalance(account: Account, transactions: Transaction[], asOfISO?: string): number {
+  const initialDate = account.initialBalanceDate;
+  if (initialDate && asOfISO && asOfISO < initialDate) return 0;
   let balance = account.initialBalance;
   for (const tx of transactions) {
+    if (initialDate && tx.date < initialDate) continue;
+    if (asOfISO && tx.date > asOfISO) continue;
     balance += accountDelta(tx, account.id);
   }
   return balance;
@@ -49,11 +59,12 @@ export function signedBalanceForNetWorth(account: Account, balance: number): num
 
 export function computeAllAccountBalances(
   accounts: Account[],
-  transactions: Transaction[]
+  transactions: Transaction[],
+  asOfISO?: string
 ): Record<string, number> {
   const result: Record<string, number> = {};
   for (const acc of accounts) {
-    result[acc.id] = computeAccountBalance(acc, transactions);
+    result[acc.id] = computeAccountBalance(acc, transactions, asOfISO);
   }
   return result;
 }

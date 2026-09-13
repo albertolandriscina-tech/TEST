@@ -2,7 +2,6 @@ import { addDays, endOfMonth, endOfYear, format, isAfter, isBefore, parseISO, st
 import type { Account, Category, ExpenseNature, PatrimonioAsset, Transaction } from '../types';
 import { LIABILITY_ACCOUNT_TYPES, LIQUIDITY_ACCOUNT_TYPES } from '../types';
 import {
-  accountDelta,
   computeAccountBalance,
   getCategoryAndDescendantIds,
   getEffectiveCategoryNature,
@@ -258,9 +257,8 @@ function bucketEndDate(key: string): Date {
 export function buildLiquidityTrend(transactions: Transaction[], accounts: Account[], buckets: CashFlowBucket[]): number[] {
   const liquidAccounts = accounts.filter((a) => LIQUIDITY_ACCOUNT_TYPES.includes(a.type));
   return buckets.map((b) => {
-    const cutoff = bucketEndDate(b.key);
-    const relevant = transactions.filter((t) => !isAfter(parseISO(t.date), cutoff));
-    return round2(liquidAccounts.reduce((s, a) => s + computeAccountBalance(a, relevant), 0));
+    const cutoffISO = format(bucketEndDate(b.key), 'yyyy-MM-dd');
+    return round2(liquidAccounts.reduce((s, a) => s + computeAccountBalance(a, transactions, cutoffISO), 0));
   });
 }
 
@@ -331,15 +329,10 @@ export function buildNetWorthTrend(
   const points: NetWorthPoint[] = [];
   for (let i = count - 1; i >= 0; i--) {
     const m = subMonths(anchor, i);
-    const cutoff = endOfMonth(m);
+    const cutoffISO = format(endOfMonth(m), 'yyyy-MM-dd');
     let accountsTotal = 0;
     for (const acc of accounts) {
-      let bal = acc.initialBalance;
-      for (const t of transactions) {
-        if (!isAfter(parseISO(t.date), cutoff)) {
-          bal += accountDelta(t, acc.id);
-        }
-      }
+      const bal = computeAccountBalance(acc, transactions, cutoffISO);
       accountsTotal += signedBalanceForNetWorth(acc, bal);
     }
     points.push({

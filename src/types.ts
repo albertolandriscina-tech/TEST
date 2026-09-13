@@ -30,6 +30,10 @@ export interface Account {
   name: string;
   type: AccountType;
   initialBalance: number;
+  /** Data (ISO yyyy-MM-dd) a cui si riferisce il saldo iniziale: i movimenti precedenti
+   * a questa data non vengono sommati al saldo, per evitare doppi conteggi. Se assente,
+   * il saldo iniziale vale "da sempre" (comportamento storico). */
+  initialBalanceDate?: string;
   currency: string;
   note?: string;
   archived?: boolean;

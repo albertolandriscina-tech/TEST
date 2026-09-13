@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Account, AccountType } from '../../types';
 import { ACCOUNT_TYPE_LABELS } from '../../types';
+import { todayISO } from '../../utils/id';
 import { Modal } from '../common/Modal';
 
 interface AccountFormProps {
@@ -13,6 +14,7 @@ export function AccountForm({ initial, onSave, onClose }: AccountFormProps) {
   const [name, setName] = useState(initial?.name ?? '');
   const [type, setType] = useState<AccountType>(initial?.type ?? 'bank');
   const [initialBalance, setInitialBalance] = useState(String(initial?.initialBalance ?? 0));
+  const [initialBalanceDate, setInitialBalanceDate] = useState(initial?.initialBalanceDate ?? todayISO());
   const [currency, setCurrency] = useState(initial?.currency ?? 'EUR');
   const [note, setNote] = useState(initial?.note ?? '');
 
@@ -22,6 +24,7 @@ export function AccountForm({ initial, onSave, onClose }: AccountFormProps) {
       name: name.trim(),
       type,
       initialBalance: Number(initialBalance) || 0,
+      initialBalanceDate: initialBalanceDate || undefined,
       currency,
       note: note.trim() || undefined,
       archived: initial?.archived ?? false,
@@ -58,9 +61,23 @@ export function AccountForm({ initial, onSave, onClose }: AccountFormProps) {
             />
           </div>
           <div>
-            <label className="label">Valuta</label>
-            <input className="input" value={currency} onChange={(e) => setCurrency(e.target.value)} />
+            <label className="label">Saldo iniziale al</label>
+            <input
+              className="input"
+              type="date"
+              value={initialBalanceDate}
+              max={todayISO()}
+              onChange={(e) => setInitialBalanceDate(e.target.value)}
+            />
           </div>
+        </div>
+        <p className="text-xs text-slate-400 -mt-2">
+          I movimenti inseriti con data precedente a questa non verranno sommati al saldo, per evitare di
+          conteggiarli due volte.
+        </p>
+        <div>
+          <label className="label">Valuta</label>
+          <input className="input" value={currency} onChange={(e) => setCurrency(e.target.value)} />
         </div>
         <div>
           <label className="label">Note (opzionale)</label>

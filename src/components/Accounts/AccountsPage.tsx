@@ -4,7 +4,7 @@ import { useStore } from '../../store/useStore';
 import { ACCOUNT_TYPE_LABELS, LIABILITY_ACCOUNT_TYPES } from '../../types';
 import type { Account } from '../../types';
 import { computeAllAccountBalances, signedBalanceForNetWorth } from '../../utils/ledger';
-import { formatCurrency } from '../../utils/format';
+import { formatCurrency, formatDate } from '../../utils/format';
 import { AccountForm } from './AccountForm';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 
@@ -65,6 +65,7 @@ export function AccountsPage() {
                 <div className="font-medium text-slate-700 truncate">{acc.name}</div>
                 <div className="text-xs text-slate-400 truncate">
                   {ACCOUNT_TYPE_LABELS[acc.type]} · {acc.currency}
+                  {acc.initialBalanceDate && <> · saldo iniziale dal {formatDate(acc.initialBalanceDate)}</>}
                 </div>
                 <div
                   className={`text-base font-semibold mt-1 ${
@@ -111,7 +112,12 @@ export function AccountsPage() {
               const bal = balances[acc.id] ?? 0;
               return (
                 <tr key={acc.id} className={acc.archived ? 'opacity-50' : ''}>
-                  <td className="font-medium text-slate-700">{acc.name}</td>
+                  <td
+                    className="font-medium text-slate-700"
+                    title={acc.initialBalanceDate ? `Saldo iniziale dal ${formatDate(acc.initialBalanceDate)}` : undefined}
+                  >
+                    {acc.name}
+                  </td>
                   <td>{ACCOUNT_TYPE_LABELS[acc.type]}</td>
                   <td>{acc.currency}</td>
                   <td
