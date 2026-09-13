@@ -36,7 +36,7 @@ export function InvestmentForm({ initial, onSave, onClose }: InvestmentFormProps
           <label className="label">Nome</label>
           <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Es. iShares Core MSCI World" />
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="label">Tipo</label>
             <select className="input" value={type} onChange={(e) => setType(e.target.value as InvestmentType)}>

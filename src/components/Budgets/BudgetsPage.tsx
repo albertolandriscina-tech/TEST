@@ -47,7 +47,7 @@ function MonthlyBudgetView({ year, month }: { year: number; month: number }) {
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="card">
           <span className="text-xs text-slate-400 uppercase">Budget totale</span>
           <div className="text-xl font-semibold text-slate-800">{formatCurrency(totalBudget)}</div>
@@ -149,7 +149,7 @@ function AnnualBudgetView({ year }: { year: number }) {
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="card">
           <span className="text-xs text-slate-400 uppercase">Budget annuale totale</span>
           <div className="text-xl font-semibold text-slate-800">{formatCurrency(grandBudget)}</div>

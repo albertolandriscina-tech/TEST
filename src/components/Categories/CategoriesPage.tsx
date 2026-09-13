@@ -85,13 +85,13 @@ function CategoryColumn({ kind, title }: { kind: CategoryKind; title: string }) 
           const children = categories.filter((c) => c.parentId === root.id);
           return (
             <li key={root.id}>
-              <div className="flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-slate-50">
-                <span className="text-sm font-medium text-slate-700">
+              <div className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50">
+                <span className="text-sm font-medium text-slate-700 truncate min-w-0">
                   {root.name}
                   {root.system && <span className="badge bg-slate-100 text-slate-500 ml-2">sistema</span>}
                 </span>
                 {!root.system && (
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 shrink-0">
                     <button className="btn-ghost !p-1" onClick={() => setEditing(root)}>
                       <Pencil size={13} />
                     </button>

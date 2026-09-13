@@ -52,14 +52,14 @@ export function TransactionsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-xl font-semibold text-slate-800">Movimenti</h1>
           <p className="text-sm text-slate-500">
             Inserisci solo l'importo positivo: entrata/uscita/giroconto vengono riconosciuti automaticamente.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <button className="btn-secondary" onClick={() => setShowImport(true)}>
             <Upload size={15} /> Importa CSV
           </button>

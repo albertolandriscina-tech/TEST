@@ -27,7 +27,7 @@ export function AccountsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-xl font-semibold text-slate-800">Conti</h1>
           <p className="text-sm text-slate-500">Conti bancari, contanti, titoli e carte di credito.</p>
@@ -37,7 +37,7 @@ export function AccountsPage() {
         </button>
       </div>
 
-      <div className="card flex items-center justify-between">
+      <div className="card flex items-center justify-between flex-wrap gap-2">
         <span className="text-sm text-slate-500">Saldo totale conti visualizzati</span>
         <span className={`text-xl font-semibold ${total >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
           {formatCurrency(total)}

@@ -27,7 +27,7 @@ export function AssetsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-xl font-semibold text-slate-800">Patrimonio</h1>
           <p className="text-sm text-slate-500">Auto, immobili e altri beni che contribuiscono al patrimonio netto.</p>
@@ -37,7 +37,7 @@ export function AssetsPage() {
         </button>
       </div>
 
-      <div className="card flex items-center justify-between">
+      <div className="card flex items-center justify-between flex-wrap gap-2">
         <span className="text-sm text-slate-500">Valore totale beni patrimoniali</span>
         <span className="text-xl font-semibold text-indigo-600">{formatCurrency(total)}</span>
       </div>

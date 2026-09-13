@@ -6,8 +6,8 @@ import 'react-resizable/css/styles.css';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
-const BREAKPOINTS = { lg: 1100, md: 800, sm: 600, xs: 0 };
-const COLS = { lg: 12, md: 8, sm: 4, xs: 2 };
+const BREAKPOINTS = { lg: 1024, md: 768, sm: 480, xs: 0 };
+const COLS = { lg: 12, md: 6, sm: 4, xs: 2 };
 
 interface DashboardGridProps {
   layout: DashboardWidgetLayout[];
@@ -19,7 +19,7 @@ interface DashboardGridProps {
 export function DashboardGrid({ layout, editMode, onLayoutChange, renderWidget }: DashboardGridProps) {
   return (
     <ResponsiveGridLayout
-      className="layout -m-2"
+      className="layout"
       layouts={{ lg: layout as Layout[] }}
       breakpoints={BREAKPOINTS}
       cols={COLS}

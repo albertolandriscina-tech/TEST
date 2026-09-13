@@ -29,7 +29,7 @@ export function KpiWidget() {
   );
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 h-full">
+    <div className="grid grid-cols-2 gap-3 h-full">
       <StatCard label="Entrate (mese)" value={formatCurrency(currentMonthIncome)} tone="positive" icon={<TrendingUp size={16} className="text-emerald-500" />} />
       <StatCard label="Uscite (mese)" value={formatCurrency(currentMonthExpense)} tone="negative" icon={<TrendingDown size={16} className="text-red-500" />} />
       <StatCard

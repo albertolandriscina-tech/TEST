@@ -38,7 +38,7 @@ export function InvestmentsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-xl font-semibold text-slate-800">Investimenti</h1>
           <p className="text-sm text-slate-500">ETF, fondi, azioni e obbligazioni, con conto corrente titoli dedicato.</p>
@@ -55,7 +55,7 @@ export function InvestmentsPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="card">
           <span className="text-xs text-slate-400 uppercase">Valore portafoglio</span>
           <div className="text-xl font-semibold text-slate-800">{formatCurrency(totalValue)}</div>
@@ -146,6 +146,7 @@ export function InvestmentsPage() {
       {trading && <InvestmentTransactionForm investment={trading} onClose={() => setTrading(null)} />}
       {historyFor && (
         <Modal title={`Storico operazioni — ${historyFor.name}`} onClose={() => setHistoryFor(null)} width="max-w-2xl">
+          <div className="overflow-x-auto">
           <table className="table-base">
             <thead>
               <tr>
@@ -190,6 +191,7 @@ export function InvestmentsPage() {
               )}
             </tbody>
           </table>
+          </div>
         </Modal>
       )}
       {deleting && (

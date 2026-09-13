@@ -85,7 +85,7 @@ export function RecurringForm({ initial, onClose }: Props) {
           <label className="label">Descrizione</label>
           <input className="input" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Es. Stipendio, Affitto, Netflix..." />
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="label">Importo</label>
             <input type="number" step="0.01" className="input" value={amount} onChange={(e) => setAmount(e.target.value)} />
@@ -101,7 +101,7 @@ export function RecurringForm({ initial, onClose }: Props) {
             </select>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="label">{type === 'transfer' ? 'Conto origine' : 'Conto'}</label>
             <select className="input" value={accountId} onChange={(e) => setAccountId(e.target.value)}>
@@ -138,7 +138,7 @@ export function RecurringForm({ initial, onClose }: Props) {
             </div>
           )}
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="label">Data inizio</label>
             <input type="date" className="input" value={startDate} onChange={(e) => setStartDate(e.target.value)} />

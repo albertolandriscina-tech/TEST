@@ -231,7 +231,7 @@ export function ImportTransactionsModal({ onClose }: Props) {
             File <strong>{fileName}</strong> — {parsed.rows.length} righe rilevate. Associa le colonne del file ai campi
             dell'app.
           </p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {(Object.keys(FIELD_LABELS) as ImportField[]).map((field) => (
               <div key={field}>
                 <label className="label">
@@ -254,7 +254,7 @@ export function ImportTransactionsModal({ onClose }: Props) {
             ))}
           </div>
 
-          <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100">
             <div>
               <label className="label">Conto predefinito (se non indicato o non trovato nel file)</label>
               <select className="input" value={defaultAccountId} onChange={(e) => setDefaultAccountId(e.target.value)}>

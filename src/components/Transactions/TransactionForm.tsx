@@ -92,7 +92,7 @@ export function TransactionForm({ initial, onClose }: TransactionFormProps) {
           ))}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="label">Data</label>
             <input type="date" className="input" value={date} onChange={(e) => setDate(e.target.value)} />
@@ -116,7 +116,7 @@ export function TransactionForm({ initial, onClose }: TransactionFormProps) {
           <input className="input" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Es. Spesa supermercato" />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="label">{type === 'transfer' ? 'Conto di origine' : 'Conto'}</label>
             <select className="input" value={accountId} onChange={(e) => setAccountId(e.target.value)}>

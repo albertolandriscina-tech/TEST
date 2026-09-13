@@ -44,7 +44,7 @@ export function Dashboard() {
           <h1 className="text-xl font-semibold text-slate-800">Dashboard</h1>
           <p className="text-sm text-slate-500">Andamento mensile di entrate, uscite e patrimonio complessivo.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {editMode && (
             <div className="relative">
               <button className="btn-secondary" onClick={() => setShowAddMenu((v) => !v)} disabled={hiddenTypes.length === 0}>
@@ -91,24 +91,20 @@ export function Dashboard() {
         </div>
       )}
 
-      <div className="overflow-x-auto -mx-2 px-2">
-        <div className="min-w-[880px]">
-          <DashboardGrid
-            layout={visibleLayout}
-            editMode={editMode}
-            onLayoutChange={setDashboardLayout}
-            renderWidget={(id) => {
-              const type = id as DashboardWidgetType;
-              const Content = WIDGET_CONTENT[type];
-              return (
-                <WidgetCard title={WIDGET_DEFINITIONS[type].title} editMode={editMode} onRemove={() => hideDashboardWidget(type)}>
-                  <Content />
-                </WidgetCard>
-              );
-            }}
-          />
-        </div>
-      </div>
+      <DashboardGrid
+        layout={visibleLayout}
+        editMode={editMode}
+        onLayoutChange={setDashboardLayout}
+        renderWidget={(id) => {
+          const type = id as DashboardWidgetType;
+          const Content = WIDGET_CONTENT[type];
+          return (
+            <WidgetCard title={WIDGET_DEFINITIONS[type].title} editMode={editMode} onRemove={() => hideDashboardWidget(type)}>
+              <Content />
+            </WidgetCard>
+          );
+        }}
+      />
     </div>
   );
 }

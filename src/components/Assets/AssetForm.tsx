@@ -47,7 +47,7 @@ export function AssetForm({ initial, onSave, onClose }: Props) {
             ))}
           </select>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="label">Valore attuale stimato</label>
             <input type="number" step="0.01" className="input" value={value} onChange={(e) => setValue(e.target.value)} />

@@ -63,7 +63,7 @@ export function InvestmentTransactionForm({ investment, onClose }: Props) {
           <label className="label">Data</label>
           <input type="date" className="input" value={date} onChange={(e) => setDate(e.target.value)} />
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="label">Quantità</label>
             <input type="number" step="0.0001" className="input" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
@@ -73,7 +73,7 @@ export function InvestmentTransactionForm({ investment, onClose }: Props) {
             <input type="number" step="0.0001" className="input" value={price} onChange={(e) => setPrice(e.target.value)} />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="label">Commissioni</label>
             <input type="number" step="0.01" className="input" value={fees} onChange={(e) => setFees(e.target.value)} />

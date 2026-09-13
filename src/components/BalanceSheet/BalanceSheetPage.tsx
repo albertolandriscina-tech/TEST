@@ -77,7 +77,7 @@ export function BalanceSheetPage() {
         </div>
       </div>
 
-      <div className="card bg-indigo-50 border-indigo-200 flex items-center justify-between">
+      <div className="card bg-indigo-50 border-indigo-200 flex items-center justify-between flex-wrap gap-2">
         <span className="font-medium text-indigo-700">Patrimonio Netto Totale</span>
         <span className="text-2xl font-bold text-indigo-700">{formatCurrency(netWorth.patrimonioNetto)}</span>
       </div>
@@ -85,6 +85,7 @@ export function BalanceSheetPage() {
       <div className="grid md:grid-cols-2 gap-4">
         <div className="card">
           <h2 className="font-semibold text-slate-700 mb-2">Attività ({formatCurrency(totaleAttivita)})</h2>
+          <div className="overflow-x-auto">
           <table className="table-base">
             <tbody>
               {attivi.map((a) => (
@@ -112,12 +113,14 @@ export function BalanceSheetPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
         <div className="card">
           <h2 className="font-semibold text-slate-700 mb-2">Passività ({formatCurrency(totalePassivita)})</h2>
           {passivi.length === 0 ? (
             <p className="text-sm text-slate-400 py-4 text-center">Nessuna passività / debito registrato.</p>
           ) : (
+            <div className="overflow-x-auto">
             <table className="table-base">
               <tbody>
                 {passivi.map((a) => (
@@ -129,8 +132,9 @@ export function BalanceSheetPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
-          <div className="mt-3 pt-3 border-t border-slate-100 flex justify-between text-sm font-semibold">
+          <div className="mt-3 pt-3 border-t border-slate-100 flex justify-between text-sm font-semibold flex-wrap gap-2">
             <span>Patrimonio Netto (Attività − Passività)</span>
             <span>{formatCurrency(totaleAttivita - totalePassivita)}</span>
           </div>
