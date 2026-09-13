@@ -1,6 +1,7 @@
 import type {
   Account,
   Category,
+  ExpenseNature,
   Investment,
   InvestmentTransaction,
   LedgerEntry,
@@ -76,6 +77,26 @@ export function getCategoryPath(categoryId: string | null | undefined, categorie
     if (parent) return `${parent.name} › ${cat.name}`;
   }
   return cat.name;
+}
+
+/**
+ * Natura di spesa "effettiva" di una categoria: se la sottocategoria non ha una natura
+ * propria, eredita quella della categoria principale (così basta impostarla una volta
+ * sul genitore quando tutte le sottocategorie condividono la stessa natura).
+ */
+export function getEffectiveCategoryNature(
+  categoryId: string | null | undefined,
+  categories: Category[]
+): ExpenseNature | undefined {
+  if (!categoryId) return undefined;
+  const cat = categories.find((c) => c.id === categoryId);
+  if (!cat) return undefined;
+  if (cat.nature) return cat.nature;
+  if (cat.parentId) {
+    const parent = categories.find((c) => c.id === cat.parentId);
+    return parent?.nature;
+  }
+  return undefined;
 }
 
 /** Genera le righe di ledger (Dare/Avere) per un movimento, secondo i principi di partita doppia. */

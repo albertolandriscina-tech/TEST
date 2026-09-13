@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Plus, Trash2, Pencil, CornerDownRight, Check } from 'lucide-react';
 import { useStore } from '../../store/useStore';
-import type { Category, CategoryKind } from '../../types';
+import type { Category, CategoryKind, ExpenseNature } from '../../types';
+import { EXPENSE_NATURE_COLORS, EXPENSE_NATURE_LABELS } from '../../types';
 import { Modal } from '../common/Modal';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { CategoryIconCircle } from '../common/CategoryBadge';
+import { getEffectiveCategoryNature } from '../../utils/ledger';
 import {
   CATEGORY_COLOR_PALETTE,
   CATEGORY_ICONS,
@@ -12,6 +14,19 @@ import {
   getCategoryColor,
   getCategoryIconKey,
 } from '../../utils/categoryStyle';
+
+function NatureBadge({ nature, inherited = false }: { nature: ExpenseNature; inherited?: boolean }) {
+  return (
+    <span
+      className="badge shrink-0"
+      style={{ backgroundColor: `${EXPENSE_NATURE_COLORS[nature]}1a`, color: EXPENSE_NATURE_COLORS[nature] }}
+      title={inherited ? 'Ereditata dalla categoria principale' : undefined}
+    >
+      {EXPENSE_NATURE_LABELS[nature]}
+      {inherited ? ' (ered.)' : ''}
+    </span>
+  );
+}
 
 function CategoryForm({
   kind,
@@ -30,6 +45,7 @@ function CategoryForm({
   const [parentId, setParentId] = useState<string>(initial?.parentId ?? '');
   const [icon, setIcon] = useState<string>(getCategoryIconKey(initial));
   const [color, setColor] = useState<string>(getCategoryColor(initial ?? { id: 'new-category' }));
+  const [nature, setNature] = useState<ExpenseNature | ''>(initial?.nature ?? '');
 
   const handleParentChange = (value: string) => {
     setParentId(value);
@@ -44,7 +60,15 @@ function CategoryForm({
 
   const submit = () => {
     if (!name.trim()) return;
-    onSave({ name: name.trim(), kind, parentId: parentId || null, icon, color, archived: initial?.archived ?? false });
+    onSave({
+      name: name.trim(),
+      kind,
+      parentId: parentId || null,
+      icon,
+      color,
+      nature: kind === 'expense' && nature ? nature : undefined,
+      archived: initial?.archived ?? false,
+    });
     onClose();
   };
 
@@ -72,6 +96,23 @@ function CategoryForm({
               ))}
           </select>
         </div>
+
+        {kind === 'expense' && (
+          <div>
+            <label className="label">Natura della spesa</label>
+            <select className="input" value={nature} onChange={(e) => setNature(e.target.value as ExpenseNature | '')}>
+              <option value="">Non specificata</option>
+              {(Object.keys(EXPENSE_NATURE_LABELS) as ExpenseNature[]).map((n) => (
+                <option key={n} value={n}>
+                  {EXPENSE_NATURE_LABELS[n]}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-slate-400 mt-1">
+              Se non specificata, una sottocategoria eredita la natura della categoria principale.
+            </p>
+          </div>
+        )}
 
         <div>
           <label className="label">Colore</label>
@@ -164,6 +205,7 @@ function CategoryColumn({ kind, title }: { kind: CategoryKind; title: string }) 
                   <CategoryIconCircle category={root} />
                   <span className="truncate">{root.name}</span>
                   {root.system && <span className="badge bg-slate-100 text-slate-500 shrink-0">sistema</span>}
+                  {root.nature && <NatureBadge nature={root.nature} />}
                 </span>
                 {!root.system && (
                   <div className="flex gap-1 shrink-0">
@@ -178,23 +220,27 @@ function CategoryColumn({ kind, title }: { kind: CategoryKind; title: string }) 
               </div>
               {children.length > 0 && (
                 <ul className="ml-4 border-l border-slate-200 pl-2">
-                  {children.map((child) => (
-                    <li key={child.id} className="flex items-center justify-between gap-2 px-2 py-1 rounded-lg hover:bg-slate-50">
-                      <span className="text-sm text-slate-600 flex items-center gap-1.5 min-w-0">
-                        <CornerDownRight size={12} className="text-slate-300 shrink-0" />
-                        <CategoryIconCircle category={child} />
-                        <span className="truncate">{child.name}</span>
-                      </span>
-                      <div className="flex gap-1">
-                        <button className="btn-ghost !p-1" onClick={() => setEditing(child)}>
-                          <Pencil size={13} />
-                        </button>
-                        <button className="btn-ghost !p-1 text-red-500" onClick={() => setDeleting(child)}>
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                    </li>
-                  ))}
+                  {children.map((child) => {
+                    const effectiveNature = getEffectiveCategoryNature(child.id, categories);
+                    return (
+                      <li key={child.id} className="flex items-center justify-between gap-2 px-2 py-1 rounded-lg hover:bg-slate-50">
+                        <span className="text-sm text-slate-600 flex items-center gap-1.5 min-w-0">
+                          <CornerDownRight size={12} className="text-slate-300 shrink-0" />
+                          <CategoryIconCircle category={child} />
+                          <span className="truncate">{child.name}</span>
+                          {effectiveNature && <NatureBadge nature={effectiveNature} inherited={!child.nature} />}
+                        </span>
+                        <div className="flex gap-1">
+                          <button className="btn-ghost !p-1" onClick={() => setEditing(child)}>
+                            <Pencil size={13} />
+                          </button>
+                          <button className="btn-ghost !p-1 text-red-500" onClick={() => setDeleting(child)}>
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </li>

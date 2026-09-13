@@ -40,6 +40,23 @@ export interface Account {
 
 export type CategoryKind = 'income' | 'expense';
 
+// Natura della spesa: quanto è comprimibile una categoria di uscita, utile per
+// distinguere spese "vincolate" (obbligatorie/necessarie) da quelle discrezionali (extra).
+export type ExpenseNature = 'obbligatoria' | 'necessaria' | 'extra';
+
+export const EXPENSE_NATURE_LABELS: Record<ExpenseNature, string> = {
+  obbligatoria: 'Obbligatoria',
+  necessaria: 'Necessaria',
+  extra: 'Extra',
+};
+
+// Colori indicativi, usati per i badge e i grafici (dal più vincolato al più discrezionale).
+export const EXPENSE_NATURE_COLORS: Record<ExpenseNature, string> = {
+  obbligatoria: '#dc2626',
+  necessaria: '#d97706',
+  extra: '#7c3aed',
+};
+
 export interface Category {
   id: string;
   name: string;
@@ -49,6 +66,7 @@ export interface Category {
   icon?: string; // chiave in CATEGORY_ICONS (src/utils/categoryStyle.ts)
   archived?: boolean;
   system?: boolean; // categorie di sistema (es. "Investimenti") non cancellabili
+  nature?: ExpenseNature; // solo per categorie di uscita (kind: 'expense')
 }
 
 // ---------- Movimenti (partita doppia) ----------

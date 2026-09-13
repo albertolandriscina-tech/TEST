@@ -1,7 +1,14 @@
 import { addDays, endOfMonth, format, isAfter, isBefore, parseISO, startOfMonth, subMonths, subYears } from 'date-fns';
-import type { Account, Category, PatrimonioAsset, Transaction } from '../types';
+import type { Account, Category, ExpenseNature, PatrimonioAsset, Transaction } from '../types';
 import { LIQUIDITY_ACCOUNT_TYPES } from '../types';
-import { accountDelta, getCategoryAndDescendantIds, round2, signedBalanceForNetWorth, type InvestmentHolding } from './ledger';
+import {
+  accountDelta,
+  getCategoryAndDescendantIds,
+  getEffectiveCategoryNature,
+  round2,
+  signedBalanceForNetWorth,
+  type InvestmentHolding,
+} from './ledger';
 import { MONTH_NAMES_SHORT_IT } from './format';
 
 export interface CashFlowBucket {
@@ -181,6 +188,47 @@ export function buildCustomRangeCashFlow(transactions: Transaction[], accounts: 
     guard++;
   }
   return buckets;
+}
+
+export interface NatureBreakdownItem {
+  nature: ExpenseNature | 'non_classificata';
+  amount: number;
+  pct: number;
+}
+
+const NATURE_ORDER: (ExpenseNature | 'non_classificata')[] = ['obbligatoria', 'necessaria', 'extra', 'non_classificata'];
+
+/**
+ * Scomposizione delle uscite per natura di spesa (obbligatoria/necessaria/extra) in un
+ * intervallo di date: aiuta a distinguere le spese "vincolate" da quelle discrezionali.
+ * Le uscite la cui categoria non ha una natura impostata (né propria né ereditata dalla
+ * categoria principale) confluiscono in "non_classificata".
+ */
+export function buildNatureBreakdown(
+  transactions: Transaction[],
+  categories: Category[],
+  fromISO: string,
+  toISO: string
+): NatureBreakdownItem[] {
+  const filtered = transactions.filter(
+    (t) => t.type === 'expense' && !t.investmentTxId && t.date >= fromISO && t.date <= toISO
+  );
+  const totals: Record<ExpenseNature | 'non_classificata', number> = {
+    obbligatoria: 0,
+    necessaria: 0,
+    extra: 0,
+    non_classificata: 0,
+  };
+  for (const t of filtered) {
+    const nature = getEffectiveCategoryNature(t.categoryId, categories) ?? 'non_classificata';
+    totals[nature] += t.amount;
+  }
+  const total = filtered.reduce((s, t) => s + t.amount, 0);
+  return NATURE_ORDER.map((nature) => ({
+    nature,
+    amount: round2(totals[nature]),
+    pct: total > 0 ? (totals[nature] / total) * 100 : 0,
+  })).filter((item) => item.amount > 0.004);
 }
 
 export interface NetWorthPoint {

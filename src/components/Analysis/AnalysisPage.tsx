@@ -7,13 +7,25 @@ import {
   buildCategoryBreakdown,
   buildCustomRangeCashFlow,
   buildDailyCashFlow,
+  buildNatureBreakdown,
   computeCashFlow,
   type CategoryBreakdownItem,
+  type NatureBreakdownItem,
 } from '../../utils/analytics';
+import { EXPENSE_NATURE_COLORS, EXPENSE_NATURE_LABELS } from '../../types';
 import { formatCurrency, formatDate, formatNumber } from '../../utils/format';
 import { getAccentColor } from '../../utils/theme';
 import { round2 } from '../../utils/ledger';
 import { CategoryIconCircle } from '../common/CategoryBadge';
+
+const NATURE_LABELS: Record<NatureBreakdownItem['nature'], string> = {
+  ...EXPENSE_NATURE_LABELS,
+  non_classificata: 'Non classificata',
+};
+const NATURE_COLORS: Record<NatureBreakdownItem['nature'], string> = {
+  ...EXPENSE_NATURE_COLORS,
+  non_classificata: '#94a3b8',
+};
 
 type Period = 'month' | 'year' | 'custom';
 
@@ -294,6 +306,19 @@ export function AnalysisPage() {
     [prevExpenseBreakdown]
   );
 
+  const natureBreakdown = useMemo(
+    () => buildNatureBreakdown(transactions, categories, fromISO, toISO),
+    [transactions, categories, fromISO, toISO]
+  );
+  const prevNatureBreakdown = useMemo(
+    () => (compareEnabled ? buildNatureBreakdown(transactions, categories, prevFromISO, prevToISO) : []),
+    [transactions, categories, prevFromISO, prevToISO, compareEnabled]
+  );
+  const prevNatureByKey = useMemo(
+    () => new Map(prevNatureBreakdown.map((i) => [i.nature, i.amount])),
+    [prevNatureBreakdown]
+  );
+
   // Il flusso di cassa comprende anche i trasferimenti verso/da conti non liquidi (es.
   // versamenti su conto titoli, rate di un mutuo), che non hanno una categoria e quindi
   // non compaiono come voce nella scomposizione per categoria: qui si calcola la parte
@@ -484,6 +509,48 @@ export function AnalysisPage() {
             </ResponsiveContainer>
           )}
         </div>
+      </div>
+
+      <div className="card">
+        <h3 className="text-sm font-semibold text-slate-700 mb-1">Uscite per natura</h3>
+        <p className="text-xs text-slate-400 mb-3">
+          Quanto delle uscite è vincolato (obbligatorio/necessario) e quanto è discrezionale (extra), in base alla
+          natura assegnata a ciascuna categoria (vedi pagina Categorie).
+        </p>
+        {natureBreakdown.length === 0 ? (
+          <p className="text-sm text-slate-400 text-center py-6">Nessuna uscita nel periodo selezionato.</p>
+        ) : (
+          <>
+            <div className="h-2.5 rounded-full overflow-hidden flex mb-3 bg-slate-100">
+              {natureBreakdown.map((item) => (
+                <div
+                  key={item.nature}
+                  style={{ width: `${item.pct}%`, backgroundColor: NATURE_COLORS[item.nature] }}
+                  title={`${NATURE_LABELS[item.nature]}: ${formatNumber(item.pct, 0)}%`}
+                />
+              ))}
+            </div>
+            <ul className="space-y-2">
+              {natureBreakdown.map((item) => (
+                <li key={item.nature} className="flex items-center justify-between gap-2 text-sm">
+                  <span className="flex items-center gap-2 min-w-0">
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: NATURE_COLORS[item.nature] }} />
+                    <span className="truncate text-slate-700">{NATURE_LABELS[item.nature]}</span>
+                  </span>
+                  <span className="flex items-center gap-1.5 shrink-0">
+                    {compareEnabled && (
+                      <MiniDelta value={pctDelta(item.amount, prevNatureByKey.get(item.nature) ?? 0)} invert />
+                    )}
+                    <span className="text-right">
+                      <span className="font-medium text-slate-700">{formatCurrency(item.amount)}</span>{' '}
+                      <span className="text-xs text-slate-400">({formatNumber(item.pct, 0)}%)</span>
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
