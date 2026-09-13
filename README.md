@@ -33,6 +33,19 @@ Senza queste variabili l'app mostra una schermata di configurazione al posto del
 Per email di conferma: Supabase richiede di default la conferma via email alla registrazione
 (configurabile in **Authentication → Settings** del progetto).
 
+## Quotazioni in tempo reale (Yahoo Finance)
+
+Yahoo Finance non permette di essere chiamato direttamente dal browser (nessun header CORS),
+quindi le richieste passano da un piccolo proxy same-origin:
+
+- in sviluppo (`npm run dev`) è Vite stesso a fare da proxy (vedi `server.proxy` in
+  `vite.config.ts`) — funziona senza configurazione aggiuntiva;
+- se pubblichi su **Vercel**, la funzione serverless [`api/quote.ts`](api/quote.ts) fa lo stesso
+  lavoro in produzione, senza bisogno di ulteriore configurazione;
+- se pubblichi altrove (Netlify, GitHub Pages, ecc.) serve un equivalente di `api/quote.ts` nel
+  formato richiesto da quella piattaforma, altrimenti le quotazioni live non funzionano e l'app
+  userà automaticamente prezzi simulati come fallback.
+
 ## Sviluppo
 
 ```bash
