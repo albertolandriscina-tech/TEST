@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Transaction, TransactionType } from '../../types';
 import { TRANSACTION_TYPE_LABELS } from '../../types';
 import { useStore } from '../../store/useStore';
@@ -26,8 +26,15 @@ export function TransactionForm({ initial, onClose }: TransactionFormProps) {
   const [categoryId, setCategoryId] = useState(initial?.categoryId ?? '');
   const [note, setNote] = useState(initial?.note ?? '');
   const [error, setError] = useState<string | null>(null);
+  const [savedMessage, setSavedMessage] = useState<string | null>(null);
 
-  const submit = () => {
+  useEffect(() => {
+    if (!savedMessage) return;
+    const t = setTimeout(() => setSavedMessage(null), 2500);
+    return () => clearTimeout(t);
+  }, [savedMessage]);
+
+  const submit = (andNew: boolean) => {
     const amt = Math.abs(Number(amount));
     if (!amt || amt <= 0) {
       setError('Inserisci un importo positivo (il segno viene gestito automaticamente).');
@@ -59,10 +66,23 @@ export function TransactionForm({ initial, onClose }: TransactionFormProps) {
 
     if (initial) {
       updateTransaction(initial.id, payload);
-    } else {
-      addTransaction(payload);
+      onClose();
+      return;
     }
-    onClose();
+
+    addTransaction(payload);
+    if (!andNew) {
+      onClose();
+      return;
+    }
+
+    // "Salva e nuovo": mantiene data, tipo e conto (comodo per inserire più movimenti
+    // simili di fila) e azzera solo i campi specifici del singolo movimento.
+    setDescription('');
+    setAmount('');
+    setNote('');
+    setError(null);
+    setSavedMessage('Movimento salvato.');
   };
 
   return (
@@ -160,12 +180,18 @@ export function TransactionForm({ initial, onClose }: TransactionFormProps) {
         </div>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
+        {savedMessage && <p className="text-sm text-emerald-600">{savedMessage}</p>}
 
         <div className="flex justify-end gap-2 pt-2">
           <button className="btn-secondary" onClick={onClose}>
             Annulla
           </button>
-          <button className="btn-primary" onClick={submit}>
+          {!initial && (
+            <button className="btn-secondary" onClick={() => submit(true)}>
+              Salva e nuovo
+            </button>
+          )}
+          <button className="btn-primary" onClick={() => submit(false)}>
             Salva
           </button>
         </div>
