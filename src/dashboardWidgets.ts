@@ -40,12 +40,12 @@ export const WIDGET_DEFINITIONS: Record<DashboardWidgetType, WidgetDefinition> =
   'category-breakdown': {
     type: 'category-breakdown',
     title: 'Spese per categoria (mese)',
-    defaultLayout: { x: 0, y: 27, w: 5, h: 9, minW: 3, minH: 5 },
+    defaultLayout: { x: 0, y: 27, w: 6, h: 10, minW: 5, minH: 6 },
   },
   'recent-transactions': {
     type: 'recent-transactions',
     title: 'Ultimi movimenti',
-    defaultLayout: { x: 5, y: 27, w: 7, h: 9, minW: 4, minH: 5 },
+    defaultLayout: { x: 6, y: 27, w: 6, h: 10, minW: 4, minH: 5 },
   },
   'expense-nature': {
     type: 'expense-nature',

@@ -9,6 +9,7 @@ import {
   buildDailyCashFlow,
   buildNatureBreakdown,
   computeCashFlow,
+  pctDelta,
   type CategoryBreakdownItem,
   type NatureBreakdownItem,
 } from '../../utils/analytics';
@@ -34,11 +35,6 @@ function monthInputValue(d: Date): string {
 }
 function dateInputValue(d: Date): string {
   return format(d, 'yyyy-MM-dd');
-}
-
-function pctDelta(current: number, previous: number): number | null {
-  if (previous === 0) return current === 0 ? 0 : null; // null = "n/d" (nessun confronto significativo)
-  return ((current - previous) / Math.abs(previous)) * 100;
 }
 
 function DeltaBadge({ value, invert = false }: { value: number | null; invert?: boolean }) {

@@ -11,6 +11,12 @@ import {
 } from './ledger';
 import { MONTH_NAMES_SHORT_IT } from './format';
 
+/** Variazione percentuale tra due valori; null = "n/d" (nessun confronto significativo, es. da 0). */
+export function pctDelta(current: number, previous: number): number | null {
+  if (previous === 0) return current === 0 ? 0 : null;
+  return ((current - previous) / Math.abs(previous)) * 100;
+}
+
 export interface CashFlowBucket {
   key: string;
   label: string;
