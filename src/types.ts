@@ -17,6 +17,14 @@ export const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
 // risultasse temporaneamente positivo.
 export const LIABILITY_ACCOUNT_TYPES: AccountType[] = ['credit_card', 'mortgage'];
 
+// Conti di liquidità immediata ("conti di liquidità o conti correnti"): il flusso di
+// cassa è il movimento di denaro che entra o esce realmente da questi conti (principio
+// di cassa), a differenza del saldo economico/Conto Economico che segue il principio di
+// competenza. Un versamento verso un conto titoli o un pagamento di un mutuo, ad esempio,
+// riducono la liquidità disponibile e vanno quindi conteggiati nel flusso di cassa anche
+// se non sono "spese" in senso economico.
+export const LIQUIDITY_ACCOUNT_TYPES: AccountType[] = ['bank', 'cash'];
+
 export interface Account {
   id: string;
   name: string;

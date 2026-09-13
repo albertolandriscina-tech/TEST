@@ -1,6 +1,8 @@
 import { TrendingUp, TrendingDown, Scale, Wallet } from 'lucide-react';
+import { endOfMonth, startOfMonth } from 'date-fns';
 import { useStore } from '../../../store/useStore';
 import { computeAllHoldings, computeNetWorth } from '../../../utils/ledger';
+import { computeCashFlow } from '../../../utils/analytics';
 import { formatCurrency } from '../../../utils/format';
 import { StatCard } from '../../common/StatCard';
 import { useMemo } from 'react';
@@ -13,14 +15,11 @@ export function KpiWidget() {
   const patrimonioAssets = useStore((s) => s.patrimonioAssets);
 
   const now = new Date();
-  const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-
-  const currentMonthIncome = transactions
-    .filter((t) => t.type === 'income' && !t.investmentTxId && t.date.startsWith(currentMonthKey))
-    .reduce((s, t) => s + t.amount, 0);
-  const currentMonthExpense = transactions
-    .filter((t) => t.type === 'expense' && !t.investmentTxId && t.date.startsWith(currentMonthKey))
-    .reduce((s, t) => s + t.amount, 0);
+  const { entrate: currentMonthIncome, uscite: currentMonthExpense } = useMemo(
+    () => computeCashFlow(transactions, accounts, startOfMonth(now), endOfMonth(now)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [transactions, accounts]
+  );
 
   const holdings = useMemo(() => computeAllHoldings(investments, investmentTransactions), [investments, investmentTransactions]);
   const netWorth = useMemo(

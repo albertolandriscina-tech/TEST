@@ -13,6 +13,7 @@ function monthInputValue(d: Date): string {
 
 export function CashFlowWidget() {
   const transactions = useStore((s) => s.transactions);
+  const accounts = useStore((s) => s.accounts);
   const accent = getAccentColor(useStore((s) => s.settings.colorTheme));
   const [period, setPeriod] = useState<Period>('month');
 
@@ -23,10 +24,10 @@ export function CashFlowWidget() {
   const [toMonth, setToMonth] = useState(defaultTo);
 
   const buckets = useMemo(() => {
-    if (period === 'month') return buildMonthlyCashFlow(transactions, 12);
-    if (period === 'year') return buildYearlyCashFlow(transactions, 5);
-    return buildCustomRangeCashFlow(transactions, `${fromMonth}-01`, `${toMonth}-01`);
-  }, [transactions, period, fromMonth, toMonth]);
+    if (period === 'month') return buildMonthlyCashFlow(transactions, accounts, 12);
+    if (period === 'year') return buildYearlyCashFlow(transactions, accounts, 5);
+    return buildCustomRangeCashFlow(transactions, accounts, `${fromMonth}-01`, `${toMonth}-01`);
+  }, [transactions, accounts, period, fromMonth, toMonth]);
 
   const totalEntrate = buckets.reduce((s, b) => s + b.entrate, 0);
   const totalUscite = buckets.reduce((s, b) => s + b.uscite, 0);

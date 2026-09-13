@@ -7,11 +7,12 @@ import {
   buildCategoryBreakdown,
   buildCustomRangeCashFlow,
   buildDailyCashFlow,
-  sumByType,
+  computeCashFlow,
   type CategoryBreakdownItem,
 } from '../../utils/analytics';
 import { formatCurrency, formatDate, formatNumber } from '../../utils/format';
 import { getAccentColor } from '../../utils/theme';
+import { round2 } from '../../utils/ledger';
 import { CategoryIconCircle } from '../common/CategoryBadge';
 
 type Period = 'month' | 'year' | 'custom';
@@ -41,7 +42,15 @@ function DeltaBadge({ value, invert = false }: { value: number | null; invert?: 
   );
 }
 
-function CategoryBreakdownList({ items, total }: { items: CategoryBreakdownItem[]; total: number }) {
+function CategoryBreakdownList({
+  items,
+  total,
+  otherAmount = 0,
+}: {
+  items: CategoryBreakdownItem[];
+  total: number;
+  otherAmount?: number;
+}) {
   const accent = getAccentColor(useStore((s) => s.settings.colorTheme));
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
@@ -53,7 +62,7 @@ function CategoryBreakdownList({ items, total }: { items: CategoryBreakdownItem[
       return next;
     });
 
-  if (items.length === 0) {
+  if (items.length === 0 && otherAmount < 0.01) {
     return <p className="text-sm text-slate-400 text-center py-6">Nessun movimento nel periodo selezionato.</p>;
   }
 
@@ -110,6 +119,25 @@ function CategoryBreakdownList({ items, total }: { items: CategoryBreakdownItem[
           </li>
         );
       })}
+      {otherAmount >= 0.01 && (
+        <li>
+          <div className="flex items-center justify-between gap-2 text-sm mb-1">
+            <span className="flex items-center gap-1.5 min-w-0 text-slate-500">
+              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 text-slate-400 shrink-0">
+                <ArrowUpRight size={12} />
+              </span>
+              <span className="truncate">Altri movimenti (verso/da conti non liquidi)</span>
+            </span>
+            <span className="text-right shrink-0 text-slate-500">{formatCurrency(otherAmount)}</span>
+          </div>
+          <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-slate-300"
+              style={{ width: `${total > 0 ? Math.min(100, (otherAmount / total) * 100) : 0}%` }}
+            />
+          </div>
+        </li>
+      )}
       <li className="flex items-center justify-between text-sm font-semibold text-slate-700 pt-1 border-t border-slate-100">
         <span>Totale</span>
         <span>{formatCurrency(total)}</span>
@@ -121,6 +149,7 @@ function CategoryBreakdownList({ items, total }: { items: CategoryBreakdownItem[
 export function AnalysisPage() {
   const transactions = useStore((s) => s.transactions);
   const categories = useStore((s) => s.categories);
+  const accounts = useStore((s) => s.accounts);
   const accent = getAccentColor(useStore((s) => s.settings.colorTheme));
 
   const [period, setPeriod] = useState<Period>('month');
@@ -172,19 +201,20 @@ export function AnalysisPage() {
     };
   }, [period, monthValue, yearValue, fromDate, toDate]);
 
-  const entrate = sumByType(transactions, 'income', parseISO(fromISO), parseISO(toISO));
-  const uscite = sumByType(transactions, 'expense', parseISO(fromISO), parseISO(toISO));
+  const { entrate, uscite } = computeCashFlow(transactions, accounts, parseISO(fromISO), parseISO(toISO));
   const saldo = entrate - uscite;
   const savingsRate = entrate > 0 ? (saldo / entrate) * 100 : 0;
 
-  const prevEntrate = sumByType(transactions, 'income', parseISO(prevFromISO), parseISO(prevToISO));
-  const prevUscite = sumByType(transactions, 'expense', parseISO(prevFromISO), parseISO(prevToISO));
+  const { entrate: prevEntrate, uscite: prevUscite } = computeCashFlow(transactions, accounts, parseISO(prevFromISO), parseISO(prevToISO));
   const prevSaldo = prevEntrate - prevUscite;
   const prevSavingsRate = prevEntrate > 0 ? (prevSaldo / prevEntrate) * 100 : 0;
 
   const trend = useMemo(
-    () => (granularity === 'day' ? buildDailyCashFlow(transactions, fromISO, toISO) : buildCustomRangeCashFlow(transactions, fromISO, toISO)),
-    [transactions, fromISO, toISO, granularity]
+    () =>
+      granularity === 'day'
+        ? buildDailyCashFlow(transactions, accounts, fromISO, toISO)
+        : buildCustomRangeCashFlow(transactions, accounts, fromISO, toISO),
+    [transactions, accounts, fromISO, toISO, granularity]
   );
 
   const incomeBreakdown = useMemo(
@@ -195,6 +225,13 @@ export function AnalysisPage() {
     () => buildCategoryBreakdown(transactions, categories, 'expense', fromISO, toISO),
     [transactions, categories, fromISO, toISO]
   );
+
+  // Il flusso di cassa comprende anche i trasferimenti verso/da conti non liquidi (es.
+  // versamenti su conto titoli, rate di un mutuo), che non hanno una categoria e quindi
+  // non compaiono come voce nella scomposizione per categoria: qui si calcola la parte
+  // residua, mostrata come riga a parte per far tornare i totali.
+  const otherIncome = Math.max(0, round2(entrate - incomeBreakdown.reduce((s, i) => s + i.amount, 0)));
+  const otherExpense = Math.max(0, round2(uscite - expenseBreakdown.reduce((s, i) => s + i.amount, 0)));
 
   const topIncome = useMemo(
     () =>
@@ -217,7 +254,12 @@ export function AnalysisPage() {
     <div className="space-y-4">
       <div>
         <h1 className="text-xl font-semibold text-slate-800">Analisi entrate e uscite</h1>
-        <p className="text-sm text-slate-500">Analisi approfondita di tutti i movimenti, per categoria e nel tempo.</p>
+        <p className="text-sm text-slate-500">
+          Analisi approfondita di tutti i movimenti, per categoria e nel tempo, calcolata a flusso di cassa: conta
+          quando il denaro entra o esce davvero dai conti di liquidità/conto corrente (comprese le uscite verso
+          conti non liquidi, es. versamenti su conto titoli o rate di un mutuo), non quando un ricavo o un costo
+          matura. Per il saldo economico per competenza vedi il Conto Economico nella pagina Bilancio.
+        </p>
       </div>
 
       <div className="card">
@@ -312,11 +354,11 @@ export function AnalysisPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="card">
           <h3 className="text-sm font-semibold text-slate-700 mb-3">Entrate per categoria</h3>
-          <CategoryBreakdownList items={incomeBreakdown} total={entrate} />
+          <CategoryBreakdownList items={incomeBreakdown} total={entrate} otherAmount={otherIncome} />
         </div>
         <div className="card">
           <h3 className="text-sm font-semibold text-slate-700 mb-3">Uscite per categoria</h3>
-          <CategoryBreakdownList items={expenseBreakdown} total={uscite} />
+          <CategoryBreakdownList items={expenseBreakdown} total={uscite} otherAmount={otherExpense} />
         </div>
       </div>
 
