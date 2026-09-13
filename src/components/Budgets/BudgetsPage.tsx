@@ -64,7 +64,48 @@ function MonthlyBudgetView({ year, month }: { year: number; month: number }) {
         </div>
       </div>
 
-      <div className="card !p-0 overflow-x-auto">
+      {expenseRoots.length === 0 && (
+        <div className="card text-center text-slate-400 py-6">Crea prima delle categorie di uscita per impostare un budget.</div>
+      )}
+
+      {/* Vista a card: sotto sm */}
+      <div className="sm:hidden space-y-2">
+        {expenseRoots.map((cat) => {
+          const budget = budgets.find((b) => b.categoryId === cat.id && b.year === year && b.month === month);
+          const actual = actualForCategory(transactions, categories, cat.id, year, month);
+          const amount = budget?.amount ?? 0;
+          const pct = amount > 0 ? Math.min(100, (actual / amount) * 100) : actual > 0 ? 100 : 0;
+          const over = amount > 0 && actual > amount;
+          return (
+            <div key={cat.id} className="card">
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-medium text-slate-700 truncate">{cat.name}</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  className="input !w-24 !py-1 text-right shrink-0"
+                  value={amount || ''}
+                  placeholder="0"
+                  onChange={(e) => setBudget(cat.id, year, month, Number(e.target.value) || 0)}
+                />
+              </div>
+              <div className="flex items-center justify-between mt-2 text-sm">
+                <span className="text-slate-500">Speso: {formatCurrency(actual)}</span>
+                <span className={`font-medium ${amount - actual >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  Residuo: {formatCurrency(amount - actual)}
+                </span>
+              </div>
+              <div className="h-2 rounded-full bg-slate-100 overflow-hidden mt-2">
+                <div className={`h-full rounded-full ${over ? 'bg-red-500' : 'bg-emerald-500'}`} style={{ width: `${pct}%` }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Vista a tabella: da sm in su */}
+      <div className="hidden sm:block card !p-0 overflow-x-auto">
         <table className="table-base">
           <thead>
             <tr>
@@ -111,13 +152,6 @@ function MonthlyBudgetView({ year, month }: { year: number; month: number }) {
                 </tr>
               );
             })}
-            {expenseRoots.length === 0 && (
-              <tr>
-                <td colSpan={5} className="text-center text-slate-400 py-6">
-                  Crea prima delle categorie di uscita per impostare un budget.
-                </td>
-              </tr>
-            )}
           </tbody>
         </table>
       </div>
@@ -167,7 +201,43 @@ function AnnualBudgetView({ year }: { year: number }) {
         </div>
       </div>
 
-      <div className="card !p-0 overflow-x-auto">
+      {rows.length === 0 && (
+        <div className="card text-center text-slate-400 py-6">Nessuna categoria di uscita disponibile.</div>
+      )}
+
+      {/* Vista a card: sotto sm, riepilogo annuale per categoria */}
+      <div className="sm:hidden space-y-2">
+        {rows.map(({ cat, annualBudget, annualActual }) => {
+          const pct = annualBudget > 0 ? Math.min(100, (annualActual / annualBudget) * 100) : annualActual > 0 ? 100 : 0;
+          const over = annualBudget > 0 && annualActual > annualBudget;
+          return (
+            <div key={cat.id} className="card">
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-medium text-slate-700 truncate">{cat.name}</span>
+                <span className="text-sm text-slate-500 shrink-0">{formatCurrency(annualBudget)} budget</span>
+              </div>
+              <div className="flex items-center justify-between mt-2 text-sm">
+                <span className="text-slate-500">Speso nell'anno: {formatCurrency(annualActual)}</span>
+                <span className={`font-medium ${over ? 'text-red-600' : 'text-emerald-600'}`}>
+                  {over ? '+' : ''}
+                  {formatCurrency(annualActual - annualBudget)}
+                </span>
+              </div>
+              <div className="h-2 rounded-full bg-slate-100 overflow-hidden mt-2">
+                <div className={`h-full rounded-full ${over ? 'bg-red-500' : 'bg-emerald-500'}`} style={{ width: `${pct}%` }} />
+              </div>
+            </div>
+          );
+        })}
+        {rows.length > 0 && (
+          <p className="text-xs text-slate-400 px-1">
+            Per il dettaglio mese per mese, consulta questa pagina da tablet o desktop (o ruota lo schermo).
+          </p>
+        )}
+      </div>
+
+      {/* Vista a tabella con dettaglio mensile: da sm in su */}
+      <div className="hidden sm:block card !p-0 overflow-x-auto">
         <table className="table-base">
           <thead>
             <tr>
@@ -199,17 +269,10 @@ function AnnualBudgetView({ year }: { year: number }) {
                 </td>
               </tr>
             ))}
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={15} className="text-center text-slate-400 py-6">
-                  Nessuna categoria di uscita disponibile.
-                </td>
-              </tr>
-            )}
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-slate-400">
+      <p className="hidden sm:block text-xs text-slate-400">
         Ogni cella mensile mostra il budget impostato (in grigio) e la spesa effettiva (sotto). Il totale annuale è la somma
         dei 12 budget mensili.
       </p>
