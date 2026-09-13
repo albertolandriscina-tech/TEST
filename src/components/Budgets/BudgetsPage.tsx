@@ -197,7 +197,8 @@ function CategoryBudgetSection({ kind, year, month }: { kind: CategoryKind; year
   );
 }
 
-function ForecastCard({ year, month }: { year: number; month: number }) {
+/** `month` assente = vista annuale: somma i 12 valori mensili di stima/budget e l'intero anno di movimenti. */
+function ForecastCard({ year, month }: { year: number; month?: number }) {
   const categories = useStore((s) => s.categories);
   const transactions = useStore((s) => s.transactions);
   const budgets = useStore((s) => s.budgets);
@@ -205,7 +206,16 @@ function ForecastCard({ year, month }: { year: number; month: number }) {
   const totalFor = (kind: CategoryKind) =>
     categories
       .filter((c) => c.kind === kind && !c.parentId && !c.archived && !c.system)
-      .reduce((s, c) => s + (budgets.find((b) => b.categoryId === c.id && b.year === year && b.month === month)?.amount ?? 0), 0);
+      .reduce((s, c) => {
+        if (month) {
+          return s + (budgets.find((b) => b.categoryId === c.id && b.year === year && b.month === month)?.amount ?? 0);
+        }
+        const annualSum = Array.from({ length: 12 }, (_, i) => i + 1).reduce(
+          (acc, m) => acc + (budgets.find((b) => b.categoryId === c.id && b.year === year && b.month === m)?.amount ?? 0),
+          0
+        );
+        return s + annualSum;
+      }, 0);
 
   const actualFor = (kind: CategoryKind) =>
     categories
@@ -224,14 +234,18 @@ function ForecastCard({ year, month }: { year: number; month: number }) {
         <div className={`text-xl font-semibold ${risparmioPrevisto >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
           {formatCurrency(risparmioPrevisto)}
         </div>
-        <p className="text-xs text-primary-700/70">Stima entrate − budget uscite</p>
+        <p className="text-xs text-primary-700/70">
+          {month ? 'Stima entrate − budget uscite' : "Somma annuale delle stime entrate − budget uscite"}
+        </p>
       </div>
       <div className="text-right">
-        <span className="text-xs text-primary-700 uppercase font-medium">Risparmio reale (finora)</span>
+        <span className="text-xs text-primary-700 uppercase font-medium">
+          Risparmio reale {month ? '(finora)' : "(anno, finora)"}
+        </span>
         <div className={`text-xl font-semibold ${risparmioReale >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
           {formatCurrency(risparmioReale)}
         </div>
-        <p className="text-xs text-primary-700/70">Incassato − speso</p>
+        <p className="text-xs text-primary-700/70">Incassato − speso {month ? '' : "nell'anno"}</p>
       </div>
     </div>
   );
@@ -397,6 +411,7 @@ function AnnualCategorySection({ kind, year }: { kind: CategoryKind; year: numbe
 function AnnualBudgetView({ year }: { year: number }) {
   return (
     <div className="space-y-6">
+      <ForecastCard year={year} />
       <AnnualCategorySection kind="expense" year={year} />
       <AnnualCategorySection kind="income" year={year} />
     </div>
