@@ -210,11 +210,27 @@ export const useStore = create<State>()(
         let sell = s.categories.find((c) => c.system && c.name === SYSTEM_CATEGORY_INVESTMENT_SELL);
         const toAdd: Category[] = [];
         if (!buy) {
-          buy = { id: newId(), name: SYSTEM_CATEGORY_INVESTMENT_BUY, kind: 'expense', parentId: null, system: true };
+          buy = {
+            id: newId(),
+            name: SYSTEM_CATEGORY_INVESTMENT_BUY,
+            kind: 'expense',
+            parentId: null,
+            system: true,
+            icon: 'trendingup',
+            color: '#6366f1',
+          };
           toAdd.push(buy);
         }
         if (!sell) {
-          sell = { id: newId(), name: SYSTEM_CATEGORY_INVESTMENT_SELL, kind: 'income', parentId: null, system: true };
+          sell = {
+            id: newId(),
+            name: SYSTEM_CATEGORY_INVESTMENT_SELL,
+            kind: 'income',
+            parentId: null,
+            system: true,
+            icon: 'trendingdown',
+            color: '#14b8a6',
+          };
           toAdd.push(sell);
         }
         if (toAdd.length) {

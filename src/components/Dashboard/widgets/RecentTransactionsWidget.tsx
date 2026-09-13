@@ -1,15 +1,8 @@
 import { useMemo } from 'react';
-import { ArrowDownCircle, ArrowRightLeft, ArrowUpCircle } from 'lucide-react';
+import { ArrowRightLeft } from 'lucide-react';
 import { useStore } from '../../../store/useStore';
-import { getCategoryPath } from '../../../utils/ledger';
 import { formatCurrency, formatDate } from '../../../utils/format';
-import type { TransactionType } from '../../../types';
-
-const typeIcon: Record<TransactionType, JSX.Element> = {
-  income: <ArrowUpCircle size={16} className="text-emerald-600 shrink-0" />,
-  expense: <ArrowDownCircle size={16} className="text-red-600 shrink-0" />,
-  transfer: <ArrowRightLeft size={16} className="text-blue-600 shrink-0" />,
-};
+import { CategoryIconCircle } from '../../common/CategoryBadge';
 
 export function RecentTransactionsWidget() {
   const transactions = useStore((s) => s.transactions);
@@ -26,25 +19,34 @@ export function RecentTransactionsWidget() {
 
   return (
     <ul className="space-y-1">
-      {recentTransactions.map((t) => (
-        <li key={t.id} className="flex items-center gap-2 py-1.5 border-b border-slate-50 last:border-0">
-          {typeIcon[t.type]}
-          <div className="min-w-0 flex-1">
-            <div className="text-sm text-slate-700 truncate">{t.description}</div>
-            <div className="text-xs text-slate-400 truncate">
-              {formatDate(t.date)} · {t.type === 'transfer' ? 'Giroconto' : getCategoryPath(t.categoryId, categories)}
+      {recentTransactions.map((t) => {
+        const category = t.categoryId ? categories.find((c) => c.id === t.categoryId) : null;
+        return (
+          <li key={t.id} className="flex items-center gap-2 py-1.5 border-b border-slate-50 last:border-0">
+            {t.type === 'transfer' ? (
+              <span className="inline-flex items-center justify-center rounded-full bg-blue-50 text-blue-600 shrink-0 w-5 h-5">
+                <ArrowRightLeft size={12} />
+              </span>
+            ) : (
+              <CategoryIconCircle category={category} />
+            )}
+            <div className="min-w-0 flex-1">
+              <div className="text-sm text-slate-700 truncate">{t.description}</div>
+              <div className="text-xs text-slate-400 truncate">
+                {formatDate(t.date)} · {t.type === 'transfer' ? 'Giroconto' : category?.name ?? 'Senza categoria'}
+              </div>
             </div>
-          </div>
-          <span
-            className={`text-sm font-medium whitespace-nowrap shrink-0 ${
-              t.type === 'income' ? 'text-emerald-600' : t.type === 'expense' ? 'text-red-600' : 'text-blue-600'
-            }`}
-          >
-            {t.type === 'income' ? '+' : t.type === 'expense' ? '-' : ''}
-            {formatCurrency(t.amount)}
-          </span>
-        </li>
-      ))}
+            <span
+              className={`text-sm font-medium whitespace-nowrap shrink-0 ${
+                t.type === 'income' ? 'text-emerald-600' : t.type === 'expense' ? 'text-red-600' : 'text-blue-600'
+              }`}
+            >
+              {t.type === 'income' ? '+' : t.type === 'expense' ? '-' : ''}
+              {formatCurrency(t.amount)}
+            </span>
+          </li>
+        );
+      })}
     </ul>
   );
 }

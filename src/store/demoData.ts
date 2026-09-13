@@ -30,8 +30,24 @@ export interface DemoDataset {
 /** Dataset di esempio realistico (12 mesi di storico) per mostrare l'app già popolata. */
 export function buildDemoDataset(): DemoDataset {
   const categories = buildDefaultCategories();
-  const buyCategory: Category = { id: newId(), name: SYSTEM_CATEGORY_INVESTMENT_BUY, kind: 'expense', parentId: null, system: true };
-  const sellCategory: Category = { id: newId(), name: SYSTEM_CATEGORY_INVESTMENT_SELL, kind: 'income', parentId: null, system: true };
+  const buyCategory: Category = {
+    id: newId(),
+    name: SYSTEM_CATEGORY_INVESTMENT_BUY,
+    kind: 'expense',
+    parentId: null,
+    system: true,
+    icon: 'trendingup',
+    color: '#6366f1',
+  };
+  const sellCategory: Category = {
+    id: newId(),
+    name: SYSTEM_CATEGORY_INVESTMENT_SELL,
+    kind: 'income',
+    parentId: null,
+    system: true,
+    icon: 'trendingdown',
+    color: '#14b8a6',
+  };
   categories.push(buyCategory, sellCategory);
 
   const cat = (name: string) => categories.find((c) => c.name === name)!.id;

@@ -1,9 +1,17 @@
 import { useState } from 'react';
-import { Plus, Trash2, Pencil, CornerDownRight } from 'lucide-react';
+import { Plus, Trash2, Pencil, CornerDownRight, Check } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import type { Category, CategoryKind } from '../../types';
 import { Modal } from '../common/Modal';
 import { ConfirmDialog } from '../common/ConfirmDialog';
+import { CategoryIconCircle } from '../common/CategoryBadge';
+import {
+  CATEGORY_COLOR_PALETTE,
+  CATEGORY_ICONS,
+  CATEGORY_ICON_KEYS,
+  getCategoryColor,
+  getCategoryIconKey,
+} from '../../utils/categoryStyle';
 
 function CategoryForm({
   kind,
@@ -20,23 +28,40 @@ function CategoryForm({
 }) {
   const [name, setName] = useState(initial?.name ?? '');
   const [parentId, setParentId] = useState<string>(initial?.parentId ?? '');
+  const [icon, setIcon] = useState<string>(getCategoryIconKey(initial));
+  const [color, setColor] = useState<string>(getCategoryColor(initial ?? { id: 'new-category' }));
+
+  const handleParentChange = (value: string) => {
+    setParentId(value);
+    if (!initial && value) {
+      const parent = parentOptions.find((p) => p.id === value);
+      if (parent) {
+        setIcon(getCategoryIconKey(parent));
+        setColor(getCategoryColor(parent));
+      }
+    }
+  };
 
   const submit = () => {
     if (!name.trim()) return;
-    onSave({ name: name.trim(), kind, parentId: parentId || null, archived: initial?.archived ?? false });
+    onSave({ name: name.trim(), kind, parentId: parentId || null, icon, color, archived: initial?.archived ?? false });
     onClose();
   };
 
   return (
     <Modal title={initial ? 'Modifica categoria' : `Nuova categoria (${kind === 'income' ? 'Entrata' : 'Uscita'})`} onClose={onClose}>
       <div className="space-y-3">
-        <div>
-          <label className="label">Nome</label>
-          <input className="input" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
+        <div className="flex items-center gap-3">
+          <CategoryIconCircle category={{ id: initial?.id ?? 'new-category', icon, color }} size="lg" />
+          <div className="flex-1 min-w-0">
+            <label className="label">Nome</label>
+            <input className="input" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
+          </div>
         </div>
+
         <div>
           <label className="label">Categoria principale (opzionale, per creare una sottocategoria)</label>
-          <select className="input" value={parentId} onChange={(e) => setParentId(e.target.value)}>
+          <select className="input" value={parentId} onChange={(e) => handleParentChange(e.target.value)}>
             <option value="">Nessuna (categoria principale)</option>
             {parentOptions
               .filter((p) => p.id !== initial?.id)
@@ -47,6 +72,55 @@ function CategoryForm({
               ))}
           </select>
         </div>
+
+        <div>
+          <label className="label">Colore</label>
+          <div className="flex flex-wrap gap-2 items-center">
+            {CATEGORY_COLOR_PALETTE.map((c) => (
+              <button
+                key={c}
+                type="button"
+                className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+                style={{ backgroundColor: c }}
+                onClick={() => setColor(c)}
+                aria-label={c}
+              >
+                {color.toLowerCase() === c.toLowerCase() && <Check size={14} className="text-white" />}
+              </button>
+            ))}
+            <input
+              type="color"
+              value={color}
+              onChange={(e) => setColor(e.target.value)}
+              className="w-7 h-7 rounded-full border border-slate-200 cursor-pointer p-0 overflow-hidden shrink-0"
+              title="Colore personalizzato"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="label">Icona</label>
+          <div className="grid grid-cols-8 gap-1.5 max-h-40 overflow-y-auto border border-slate-200 rounded-lg p-2">
+            {CATEGORY_ICON_KEYS.map((key) => {
+              const Icon = CATEGORY_ICONS[key];
+              const selected = icon === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                    selected ? 'bg-slate-800 text-white' : 'text-slate-500 hover:bg-slate-100'
+                  }`}
+                  onClick={() => setIcon(key)}
+                  title={key}
+                >
+                  <Icon size={16} />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <div className="flex justify-end gap-2 pt-2">
           <button className="btn-secondary" onClick={onClose}>
             Annulla
@@ -86,9 +160,10 @@ function CategoryColumn({ kind, title }: { kind: CategoryKind; title: string }) 
           return (
             <li key={root.id}>
               <div className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50">
-                <span className="text-sm font-medium text-slate-700 truncate min-w-0">
-                  {root.name}
-                  {root.system && <span className="badge bg-slate-100 text-slate-500 ml-2">sistema</span>}
+                <span className="flex items-center gap-2 text-sm font-medium text-slate-700 truncate min-w-0">
+                  <CategoryIconCircle category={root} />
+                  <span className="truncate">{root.name}</span>
+                  {root.system && <span className="badge bg-slate-100 text-slate-500 shrink-0">sistema</span>}
                 </span>
                 {!root.system && (
                   <div className="flex gap-1 shrink-0">
@@ -104,10 +179,11 @@ function CategoryColumn({ kind, title }: { kind: CategoryKind; title: string }) 
               {children.length > 0 && (
                 <ul className="ml-4 border-l border-slate-200 pl-2">
                   {children.map((child) => (
-                    <li key={child.id} className="flex items-center justify-between px-2 py-1 rounded-lg hover:bg-slate-50">
-                      <span className="text-sm text-slate-600 flex items-center gap-1">
-                        <CornerDownRight size={12} className="text-slate-300" />
-                        {child.name}
+                    <li key={child.id} className="flex items-center justify-between gap-2 px-2 py-1 rounded-lg hover:bg-slate-50">
+                      <span className="text-sm text-slate-600 flex items-center gap-1.5 min-w-0">
+                        <CornerDownRight size={12} className="text-slate-300 shrink-0" />
+                        <CategoryIconCircle category={child} />
+                        <span className="truncate">{child.name}</span>
                       </span>
                       <div className="flex gap-1">
                         <button className="btn-ghost !p-1" onClick={() => setEditing(child)}>

@@ -3,11 +3,11 @@ import { Plus, Trash2, Pencil, ArrowDownCircle, ArrowUpCircle, ArrowRightLeft, D
 import { useStore } from '../../store/useStore';
 import type { Transaction, TransactionType } from '../../types';
 import { formatCurrency, formatDate } from '../../utils/format';
-import { getCategoryPath } from '../../utils/ledger';
 import { downloadTextFile, transactionsToCSV } from '../../utils/csv';
 import { TransactionForm } from './TransactionForm';
 import { ImportTransactionsModal } from './ImportTransactionsModal';
 import { ConfirmDialog } from '../common/ConfirmDialog';
+import { CategoryBadge } from '../common/CategoryBadge';
 
 const typeIcon: Record<TransactionType, JSX.Element> = {
   income: <ArrowUpCircle size={16} className="text-emerald-600" />,
@@ -172,7 +172,7 @@ export function TransactionsPage() {
                 {t.type === 'transfer' ? `${accountName(t.accountId)} → ${accountName(t.toAccountId!)}` : accountName(t.accountId)}
               </div>
               {t.type !== 'transfer' && (
-                <div className="text-xs text-slate-400 truncate">{getCategoryPath(t.categoryId, categories)}</div>
+                <CategoryBadge categoryId={t.categoryId} categories={categories} className="text-xs text-slate-400 mt-0.5" />
               )}
               <div className="flex items-center justify-between mt-2">
                 <span
@@ -233,7 +233,9 @@ export function TransactionsPage() {
                 <td className="text-slate-500">
                   {t.type === 'transfer' ? `${accountName(t.accountId)} → ${accountName(t.toAccountId!)}` : accountName(t.accountId)}
                 </td>
-                <td className="text-slate-500">{t.type === 'transfer' ? '—' : getCategoryPath(t.categoryId, categories)}</td>
+                <td className="text-slate-500">
+                  {t.type === 'transfer' ? '—' : <CategoryBadge categoryId={t.categoryId} categories={categories} />}
+                </td>
                 <td
                   className={`text-right font-semibold whitespace-nowrap ${
                     t.type === 'income' ? 'text-emerald-600' : t.type === 'expense' ? 'text-red-600' : 'text-blue-600'

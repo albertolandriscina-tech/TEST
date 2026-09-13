@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useStore } from '../../../store/useStore';
 import { getCategoryAndDescendantIds } from '../../../utils/ledger';
 import { formatCurrency, MONTH_NAMES_IT } from '../../../utils/format';
+import { CategoryIconCircle } from '../../common/CategoryBadge';
 
 function actualForCategory(
   transactions: ReturnType<typeof useStore.getState>['transactions'],
@@ -72,9 +73,12 @@ export function BudgetWidget() {
           const over = amount > 0 && actual > amount;
           return (
             <li key={cat.id}>
-              <div className="flex items-center justify-between text-xs mb-0.5">
-                <span className="text-slate-600 truncate">{cat.name}</span>
-                <span className={`whitespace-nowrap ${over ? 'text-red-600 font-medium' : 'text-slate-500'}`}>
+              <div className="flex items-center justify-between gap-2 text-xs mb-0.5">
+                <span className="flex items-center gap-1.5 min-w-0 text-slate-600 truncate">
+                  <CategoryIconCircle category={cat} />
+                  <span className="truncate">{cat.name}</span>
+                </span>
+                <span className={`whitespace-nowrap shrink-0 ${over ? 'text-red-600 font-medium' : 'text-slate-500'}`}>
                   {formatCurrency(actual)} {amount > 0 && `/ ${formatCurrency(amount)}`}
                 </span>
               </div>

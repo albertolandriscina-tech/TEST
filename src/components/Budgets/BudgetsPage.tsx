@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useStore } from '../../store/useStore';
 import { formatCurrency, MONTH_NAMES_IT, MONTH_NAMES_SHORT_IT } from '../../utils/format';
 import { getCategoryAndDescendantIds } from '../../utils/ledger';
+import { CategoryIconCircle } from '../common/CategoryBadge';
 
 function useYears() {
   const transactions = useStore((s) => s.transactions);
@@ -79,7 +80,10 @@ function MonthlyBudgetView({ year, month }: { year: number; month: number }) {
           return (
             <div key={cat.id} className="card">
               <div className="flex items-center justify-between gap-3">
-                <span className="font-medium text-slate-700 truncate">{cat.name}</span>
+                <span className="flex items-center gap-2 min-w-0 font-medium text-slate-700 truncate">
+                  <CategoryIconCircle category={cat} />
+                  <span className="truncate">{cat.name}</span>
+                </span>
                 <input
                   type="number"
                   min="0"
@@ -125,7 +129,12 @@ function MonthlyBudgetView({ year, month }: { year: number; month: number }) {
               const over = amount > 0 && actual > amount;
               return (
                 <tr key={cat.id}>
-                  <td className="font-medium text-slate-700">{cat.name}</td>
+                  <td className="font-medium text-slate-700">
+                    <span className="flex items-center gap-2">
+                      <CategoryIconCircle category={cat} />
+                      {cat.name}
+                    </span>
+                  </td>
                   <td className="text-right">
                     <input
                       type="number"
@@ -213,7 +222,10 @@ function AnnualBudgetView({ year }: { year: number }) {
           return (
             <div key={cat.id} className="card">
               <div className="flex items-center justify-between gap-3">
-                <span className="font-medium text-slate-700 truncate">{cat.name}</span>
+                <span className="flex items-center gap-2 min-w-0 font-medium text-slate-700 truncate">
+                  <CategoryIconCircle category={cat} />
+                  <span className="truncate">{cat.name}</span>
+                </span>
                 <span className="text-sm text-slate-500 shrink-0">{formatCurrency(annualBudget)} budget</span>
               </div>
               <div className="flex items-center justify-between mt-2 text-sm">
@@ -254,7 +266,12 @@ function AnnualBudgetView({ year }: { year: number }) {
           <tbody>
             {rows.map(({ cat, monthly, annualBudget, annualActual }) => (
               <tr key={cat.id}>
-                <td className="font-medium text-slate-700 sticky left-0 bg-white">{cat.name}</td>
+                <td className="font-medium text-slate-700 sticky left-0 bg-white">
+                  <span className="flex items-center gap-2">
+                    <CategoryIconCircle category={cat} />
+                    {cat.name}
+                  </span>
+                </td>
                 {monthly.map((m, i) => (
                   <td key={i} className="text-right text-xs">
                     <div className="text-slate-400">{formatCurrency(m.budget)}</div>

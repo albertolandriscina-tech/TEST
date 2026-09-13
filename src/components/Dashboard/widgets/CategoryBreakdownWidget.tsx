@@ -2,8 +2,7 @@ import { useMemo } from 'react';
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { useStore } from '../../../store/useStore';
 import { formatCurrency } from '../../../utils/format';
-
-const PALETTE = ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#8b5cf6', '#14b8a6'];
+import { getCategoryColor } from '../../../utils/categoryStyle';
 
 export function CategoryBreakdownWidget() {
   const transactions = useStore((s) => s.transactions);
@@ -24,7 +23,7 @@ export function CategoryBreakdownWidget() {
             return cat?.parentId === root.id;
           })
           .reduce((s, t) => s + t.amount, 0);
-        return { name: root.name, value };
+        return { name: root.name, value, color: getCategoryColor(root) };
       })
       .filter((d) => d.value > 0)
       .sort((a, b) => b.value - a.value);
@@ -38,8 +37,8 @@ export function CategoryBreakdownWidget() {
     <ResponsiveContainer width="100%" height="100%">
       <PieChart>
         <Pie data={categoryBreakdown} dataKey="value" nameKey="name" innerRadius="45%" outerRadius="75%" paddingAngle={2}>
-          {categoryBreakdown.map((_, i) => (
-            <Cell key={i} fill={PALETTE[i % PALETTE.length]} />
+          {categoryBreakdown.map((d, i) => (
+            <Cell key={i} fill={d.color} />
           ))}
         </Pie>
         <Tooltip formatter={(v: number) => formatCurrency(v)} />

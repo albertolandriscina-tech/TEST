@@ -35,6 +35,7 @@ export interface Category {
   kind: CategoryKind;
   parentId?: string | null;
   color?: string;
+  icon?: string; // chiave in CATEGORY_ICONS (src/utils/categoryStyle.ts)
   archived?: boolean;
   system?: boolean; // categorie di sistema (es. "Investimenti") non cancellabili
 }
