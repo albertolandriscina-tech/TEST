@@ -21,6 +21,8 @@ import { useCloudSync } from './hooks/useCloudSync';
 import { isSupabaseConfigured } from './lib/supabaseClient';
 import { applyAppearance } from './utils/theme';
 
+const PREVIEW_SKIP_AUTH = import.meta.env.VITE_PREVIEW_SKIP_AUTH === 'true';
+
 function FullScreenLoader() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 dark:bg-slate-900">
@@ -45,7 +47,14 @@ export default function App() {
   useCloudSync();
 
   useEffect(() => {
-    if (!session) return;
+    if (PREVIEW_SKIP_AUTH) {
+      useStore.getState().loadDemoData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!PREVIEW_SKIP_AUTH && !session) return;
     const count = generateDueRecurring();
     if (count > 0) {
       setNotice(`Generati ${count} movimenti ricorrenti dovuti.`);
@@ -68,14 +77,16 @@ export default function App() {
     return () => mql.removeEventListener('change', onChange);
   }, [settings.theme, settings.colorTheme, settings.fontFamily]);
 
-  if (isSupabaseConfigured && authInitializing) {
-    return <FullScreenLoader />;
-  }
-  if (!isSupabaseConfigured || !session) {
-    return <AuthPage />;
-  }
-  if (syncStatus === 'loading') {
-    return <FullScreenLoader />;
+  if (!PREVIEW_SKIP_AUTH) {
+    if (isSupabaseConfigured && authInitializing) {
+      return <FullScreenLoader />;
+    }
+    if (!isSupabaseConfigured || !session) {
+      return <AuthPage />;
+    }
+    if (syncStatus === 'loading') {
+      return <FullScreenLoader />;
+    }
   }
 
   return (

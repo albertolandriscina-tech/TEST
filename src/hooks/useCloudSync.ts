@@ -57,6 +57,8 @@ async function saveNow(userId: string, state: ReturnType<typeof useStore.getStat
  * dati di esempio come primo avvio. Al logout lo stato locale viene azzerato, così i
  * dati di un utente non restano visibili al successivo che accede dallo stesso browser.
  */
+const PREVIEW_SKIP_AUTH = import.meta.env.VITE_PREVIEW_SKIP_AUTH === 'true';
+
 export function useCloudSync() {
   const userId = useAuthStore((s) => s.user?.id ?? null);
   const suppressRef = useRef(false);
@@ -64,7 +66,7 @@ export function useCloudSync() {
   const activeUserRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!isSupabaseConfigured || !supabase) return;
+    if (PREVIEW_SKIP_AUTH || !isSupabaseConfigured || !supabase) return;
 
     if (!userId) {
       activeUserRef.current = null;
@@ -101,7 +103,7 @@ export function useCloudSync() {
   }, [userId]);
 
   useEffect(() => {
-    if (!isSupabaseConfigured || !supabase) return;
+    if (PREVIEW_SKIP_AUTH || !isSupabaseConfigured || !supabase) return;
 
     const unsubscribe = useStore.subscribe((state) => {
       const uid = activeUserRef.current;
