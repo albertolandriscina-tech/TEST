@@ -42,7 +42,50 @@ export function AssetsPage() {
         <span className="text-xl font-semibold text-indigo-600">{formatCurrency(total)}</span>
       </div>
 
-      <div className="card !p-0 overflow-x-auto">
+      {assets.length === 0 && (
+        <div className="card text-center text-slate-400 py-6">Nessun bene patrimoniale registrato.</div>
+      )}
+
+      {/* Vista a card: sotto sm */}
+      <div className="sm:hidden space-y-2">
+        {assets.map((a) => {
+          const delta = a.purchaseValue !== undefined ? a.value - a.purchaseValue : null;
+          return (
+            <div key={a.id} className="card">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex items-center gap-2 font-medium text-slate-700">
+                  {categoryIcon[a.category]}
+                  <span className="truncate">{a.name}</span>
+                </div>
+                <div className="flex gap-1 shrink-0">
+                  <button className="btn-ghost !p-1.5" onClick={() => setEditing(a)}>
+                    <Pencil size={14} />
+                  </button>
+                  <button className="btn-ghost !p-1.5 text-red-500" onClick={() => setDeleting(a)}>
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+              <div className="text-xs text-slate-400 mt-1">
+                {ASSET_CATEGORY_LABELS[a.category]}
+                {a.purchaseDate && ` · acquistato il ${formatDate(a.purchaseDate)}`}
+              </div>
+              <div className="flex items-center justify-between mt-2 text-sm">
+                <span className="font-semibold text-slate-700">{formatCurrency(a.value)}</span>
+                {delta !== null && (
+                  <span className={delta >= 0 ? 'text-emerald-600' : 'text-red-600'}>
+                    {delta >= 0 ? '+' : ''}
+                    {formatCurrency(delta)}
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Vista a tabella: da sm in su */}
+      <div className="hidden sm:block card !p-0 overflow-x-auto">
         <table className="table-base">
           <thead>
             <tr>
@@ -86,13 +129,6 @@ export function AssetsPage() {
                 </tr>
               );
             })}
-            {assets.length === 0 && (
-              <tr>
-                <td colSpan={7} className="text-center text-slate-400 py-6">
-                  Nessun bene patrimoniale registrato.
-                </td>
-              </tr>
-            )}
           </tbody>
         </table>
       </div>

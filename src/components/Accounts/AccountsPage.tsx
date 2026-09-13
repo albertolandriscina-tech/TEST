@@ -51,7 +51,47 @@ export function AccountsPage() {
         </label>
       </div>
 
-      <div className="card !p-0 overflow-x-auto">
+      {visibleAccounts.length === 0 && (
+        <div className="card text-center text-slate-400 py-6">Nessun conto. Crea il primo conto per iniziare.</div>
+      )}
+
+      {/* Vista a card: sotto sm, per avere le azioni sempre visibili senza scroll orizzontale */}
+      <div className="sm:hidden space-y-2">
+        {visibleAccounts.map((acc) => {
+          const bal = balances[acc.id] ?? 0;
+          return (
+            <div key={acc.id} className={`card flex items-center justify-between gap-3 ${acc.archived ? 'opacity-50' : ''}`}>
+              <div className="min-w-0">
+                <div className="font-medium text-slate-700 truncate">{acc.name}</div>
+                <div className="text-xs text-slate-400 truncate">
+                  {ACCOUNT_TYPE_LABELS[acc.type]} · {acc.currency}
+                </div>
+                <div className={`text-base font-semibold mt-1 ${bal >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  {formatCurrency(bal, acc.currency)}
+                </div>
+              </div>
+              <div className="flex flex-col gap-1 shrink-0">
+                <button className="btn-ghost !p-1.5" title="Modifica" onClick={() => setEditing(acc)}>
+                  <Pencil size={15} />
+                </button>
+                <button
+                  className="btn-ghost !p-1.5"
+                  title={acc.archived ? 'Riattiva' : 'Archivia'}
+                  onClick={() => updateAccount(acc.id, { archived: !acc.archived })}
+                >
+                  {acc.archived ? <ArchiveRestore size={15} /> : <Archive size={15} />}
+                </button>
+                <button className="btn-ghost !p-1.5 text-red-500" title="Elimina" onClick={() => setDeleting(acc)}>
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Vista a tabella: da sm in su */}
+      <div className="hidden sm:block card !p-0 overflow-x-auto">
         <table className="table-base">
           <thead>
             <tr>
@@ -93,13 +133,6 @@ export function AccountsPage() {
                 </tr>
               );
             })}
-            {visibleAccounts.length === 0 && (
-              <tr>
-                <td colSpan={5} className="text-center text-slate-400 py-6">
-                  Nessun conto. Crea il primo conto per iniziare.
-                </td>
-              </tr>
-            )}
           </tbody>
         </table>
       </div>

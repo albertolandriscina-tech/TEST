@@ -137,7 +137,68 @@ export function TransactionsPage() {
         </div>
       )}
 
-      <div className="card !p-0 overflow-x-auto">
+      {filtered.length === 0 && (
+        <div className="card text-center text-slate-400 py-6">Nessun movimento trovato.</div>
+      )}
+
+      {filtered.length > 0 && (
+        <label className="sm:hidden flex items-center gap-2 text-sm text-slate-500 px-1">
+          <input
+            type="checkbox"
+            checked={allVisibleSelected}
+            onChange={(e) => (e.target.checked ? selectAll(filtered.map((t) => t.id)) : clearSelection())}
+          />
+          Seleziona tutti
+        </label>
+      )}
+
+      {/* Vista a card: sotto sm */}
+      <div className="sm:hidden space-y-2">
+        {filtered.map((t) => (
+          <div key={t.id} className={`card flex items-start gap-3 ${selectedIds.includes(t.id) ? 'bg-indigo-50/50 border-indigo-200' : ''}`}>
+            <input
+              type="checkbox"
+              className="mt-1 shrink-0"
+              checked={selectedIds.includes(t.id)}
+              onChange={() => toggleSelect(t.id)}
+            />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 min-w-0">
+                {typeIcon[t.type]}
+                <span className="font-medium text-slate-700 truncate">{t.description}</span>
+              </div>
+              <div className="text-xs text-slate-400 mt-0.5 truncate">
+                {formatDate(t.date)} ·{' '}
+                {t.type === 'transfer' ? `${accountName(t.accountId)} → ${accountName(t.toAccountId!)}` : accountName(t.accountId)}
+              </div>
+              {t.type !== 'transfer' && (
+                <div className="text-xs text-slate-400 truncate">{getCategoryPath(t.categoryId, categories)}</div>
+              )}
+              <div className="flex items-center justify-between mt-2">
+                <span
+                  className={`font-semibold ${
+                    t.type === 'income' ? 'text-emerald-600' : t.type === 'expense' ? 'text-red-600' : 'text-blue-600'
+                  }`}
+                >
+                  {t.type === 'income' ? '+' : t.type === 'expense' ? '-' : ''}
+                  {formatCurrency(t.amount)}
+                </span>
+                <div className="flex gap-1">
+                  <button className="btn-ghost !p-1.5" onClick={() => setEditing(t)}>
+                    <Pencil size={14} />
+                  </button>
+                  <button className="btn-ghost !p-1.5 text-red-500" onClick={() => setDeleting(t)}>
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Vista a tabella: da sm in su */}
+      <div className="hidden sm:block card !p-0 overflow-x-auto">
         <table className="table-base">
           <thead>
             <tr>
@@ -193,13 +254,6 @@ export function TransactionsPage() {
                 </td>
               </tr>
             ))}
-            {filtered.length === 0 && (
-              <tr>
-                <td colSpan={7} className="text-center text-slate-400 py-6">
-                  Nessun movimento trovato.
-                </td>
-              </tr>
-            )}
           </tbody>
         </table>
       </div>

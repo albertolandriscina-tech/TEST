@@ -48,7 +48,53 @@ export function RecurringPage() {
 
       {message && <div className="card bg-indigo-50 border-indigo-200 text-indigo-700 text-sm">{message}</div>}
 
-      <div className="card !p-0 overflow-x-auto">
+      {rules.length === 0 && (
+        <div className="card text-center text-slate-400 py-6">Nessun movimento ricorrente configurato.</div>
+      )}
+
+      {/* Vista a card: sotto sm */}
+      <div className="sm:hidden space-y-2">
+        {rules.map((r) => (
+          <div key={r.id} className={`card ${!r.active ? 'opacity-50' : ''}`}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="font-medium text-slate-700 truncate">{r.description}</div>
+                <div className="text-xs text-slate-400 truncate">
+                  {TRANSACTION_TYPE_LABELS[r.type]} ·{' '}
+                  {r.type === 'transfer' ? `${accountName(r.accountId)} → ${accountName(r.toAccountId!)}` : accountName(r.accountId)}
+                </div>
+              </div>
+              <div className="flex gap-1 shrink-0">
+                <button
+                  className="btn-ghost !p-1.5"
+                  title={r.active ? 'Metti in pausa' : 'Riattiva'}
+                  onClick={() => updateRecurring(r.id, { active: !r.active })}
+                >
+                  {r.active ? <Pause size={14} /> : <Play size={14} />}
+                </button>
+                <button className="btn-ghost !p-1.5" onClick={() => setEditing(r)}>
+                  <Pencil size={14} />
+                </button>
+                <button className="btn-ghost !p-1.5 text-red-500" onClick={() => setDeleting(r)}>
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            </div>
+            <div className="flex items-center justify-between mt-2 text-sm">
+              <span className="text-slate-500">
+                {RECURRENCE_LABELS[r.frequency]} · {r.lastGeneratedDate ? formatDate(r.lastGeneratedDate) : 'Mai generato'}
+              </span>
+              <span className="font-semibold text-slate-700">{formatCurrency(r.amount)}</span>
+            </div>
+            <span className={`badge mt-2 ${r.active ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
+              {r.active ? 'Attivo' : 'In pausa'}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Vista a tabella: da sm in su */}
+      <div className="hidden sm:block card !p-0 overflow-x-auto">
         <table className="table-base">
           <thead>
             <tr>
@@ -97,13 +143,6 @@ export function RecurringPage() {
                 </td>
               </tr>
             ))}
-            {rules.length === 0 && (
-              <tr>
-                <td colSpan={8} className="text-center text-slate-400 py-6">
-                  Nessun movimento ricorrente configurato.
-                </td>
-              </tr>
-            )}
           </tbody>
         </table>
       </div>

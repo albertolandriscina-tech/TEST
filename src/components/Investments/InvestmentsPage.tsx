@@ -72,7 +72,70 @@ export function InvestmentsPage() {
         </div>
       </div>
 
-      <div className="card !p-0 overflow-x-auto">
+      {holdings.length === 0 && (
+        <div className="card text-center text-slate-400 py-6">Nessuno strumento finanziario. Aggiungine uno per iniziare.</div>
+      )}
+
+      {/* Vista a card: sotto sm */}
+      <div className="sm:hidden space-y-2">
+        {holdings.map(({ investment, quantity, averagePrice, currentValue, gainLoss, gainLossPct }) => (
+          <div key={investment.id} className="card">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="font-medium text-slate-700 truncate">{investment.name}</div>
+                <div className="text-xs text-slate-400 truncate">
+                  {INVESTMENT_TYPE_LABELS[investment.type]}
+                  {investment.ticker && ` · ${investment.ticker}`}
+                </div>
+              </div>
+              <div className="flex gap-1 shrink-0">
+                <button className="btn-ghost !p-1.5" title="Acquista/Vendi" onClick={() => setTrading(investment)}>
+                  <ShoppingCart size={14} />
+                </button>
+                <button className="btn-ghost !p-1.5" title="Storico operazioni" onClick={() => setHistoryFor(investment)}>
+                  <History size={14} />
+                </button>
+                <button className="btn-ghost !p-1.5" title="Modifica" onClick={() => setEditing(investment)}>
+                  <Pencil size={14} />
+                </button>
+                <button className="btn-ghost !p-1.5 text-red-500" title="Elimina" onClick={() => setDeleting(investment)}>
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
+              <div>
+                <div className="text-xs text-slate-400">Quantità</div>
+                <div>{formatNumber(quantity, 4)}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400">Prezzo medio</div>
+                <div>{formatCurrency(averagePrice)}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400">Prezzo corrente</div>
+                <input
+                  type="number"
+                  step="0.0001"
+                  className="input !w-24 !py-1"
+                  value={investment.currentPrice}
+                  onChange={(e) => updateInvestment(investment.id, { currentPrice: Number(e.target.value) || 0 })}
+                />
+              </div>
+              <div>
+                <div className="text-xs text-slate-400">Valore</div>
+                <div className="font-medium">{formatCurrency(currentValue)}</div>
+              </div>
+            </div>
+            <div className={`mt-2 text-sm font-medium ${gainLoss >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+              {formatCurrency(gainLoss)} ({formatNumber(gainLossPct, 1)}%)
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Vista a tabella: da sm in su */}
+      <div className="hidden sm:block card !p-0 overflow-x-auto">
         <table className="table-base">
           <thead>
             <tr>
@@ -128,13 +191,6 @@ export function InvestmentsPage() {
                 </td>
               </tr>
             ))}
-            {holdings.length === 0 && (
-              <tr>
-                <td colSpan={8} className="text-center text-slate-400 py-6">
-                  Nessuno strumento finanziario. Aggiungine uno per iniziare.
-                </td>
-              </tr>
-            )}
           </tbody>
         </table>
       </div>
