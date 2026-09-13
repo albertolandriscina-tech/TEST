@@ -267,3 +267,55 @@ export function computeNetWorth(
 export function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
 }
+
+// ---------- Conto Economico ----------
+
+export interface IncomeStatementLine {
+  category: Category;
+  amount: number;
+}
+
+export interface IncomeStatement {
+  year: number;
+  ricavi: IncomeStatementLine[];
+  costi: IncomeStatementLine[];
+  totaleRicavi: number;
+  totaleCosti: number;
+  risultato: number; // positivo = utile, negativo = perdita
+}
+
+/**
+ * Conto Economico dell'esercizio: ricavi e costi (per categoria principale, esclusi i
+ * movimenti di sistema legati agli investimenti, che sono trasferimenti patrimoniali e
+ * non componenti di reddito) con il risultato d'esercizio (utile/perdita), secondo la
+ * logica delle sezioni contrapposte Dare (Costi) / Avere (Ricavi) della partita doppia.
+ */
+export function computeIncomeStatement(transactions: Transaction[], categories: Category[], year: number): IncomeStatement {
+  const buildLines = (kind: Category['kind'], type: Transaction['type']): IncomeStatementLine[] => {
+    const roots = categories.filter((c) => c.kind === kind && !c.parentId && !c.archived && !c.system);
+    return roots
+      .map((category) => {
+        const ids = getCategoryAndDescendantIds(category.id, categories);
+        const amount = transactions
+          .filter((t) => t.type === type && t.categoryId && ids.includes(t.categoryId) && t.date.startsWith(String(year)))
+          .reduce((s, t) => s + t.amount, 0);
+        return { category, amount };
+      })
+      .filter((line) => line.amount > 0)
+      .sort((a, b) => b.amount - a.amount);
+  };
+
+  const ricavi = buildLines('income', 'income');
+  const costi = buildLines('expense', 'expense');
+  const totaleRicavi = round2(ricavi.reduce((s, l) => s + l.amount, 0));
+  const totaleCosti = round2(costi.reduce((s, l) => s + l.amount, 0));
+
+  return {
+    year,
+    ricavi,
+    costi,
+    totaleRicavi,
+    totaleCosti,
+    risultato: round2(totaleRicavi - totaleCosti),
+  };
+}

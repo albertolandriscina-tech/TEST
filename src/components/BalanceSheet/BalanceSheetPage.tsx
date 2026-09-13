@@ -1,9 +1,20 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { CheckCircle2, XCircle } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { ACCOUNT_TYPE_LABELS, ASSET_CATEGORY_LABELS } from '../../types';
-import { computeAllAccountBalances, computeAllHoldings, computeNetWorth, computeQuadratura } from '../../utils/ledger';
+import { computeAllAccountBalances, computeAllHoldings, computeIncomeStatement, computeNetWorth, computeQuadratura } from '../../utils/ledger';
 import { formatCurrency } from '../../utils/format';
+import { CategoryIconCircle } from '../common/CategoryBadge';
+
+function useYears() {
+  const transactions = useStore((s) => s.transactions);
+  return useMemo(() => {
+    const years = new Set<number>();
+    years.add(new Date().getFullYear());
+    transactions.forEach((t) => years.add(Number(t.date.slice(0, 4))));
+    return Array.from(years).sort((a, b) => b - a);
+  }, [transactions]);
+}
 
 export function BalanceSheetPage() {
   const accounts = useStore((s) => s.accounts);
@@ -12,6 +23,9 @@ export function BalanceSheetPage() {
   const investments = useStore((s) => s.investments);
   const investmentTransactions = useStore((s) => s.investmentTransactions);
   const patrimonioAssets = useStore((s) => s.patrimonioAssets);
+
+  const years = useYears();
+  const [year, setYear] = useState(years[0] ?? new Date().getFullYear());
 
   const balances = useMemo(() => computeAllAccountBalances(accounts, transactions), [accounts, transactions]);
   const holdings = useMemo(() => computeAllHoldings(investments, investmentTransactions), [investments, investmentTransactions]);
@@ -23,6 +37,10 @@ export function BalanceSheetPage() {
     () => computeQuadratura(accounts, transactions, categories),
     [accounts, transactions, categories]
   );
+  const incomeStatement = useMemo(
+    () => computeIncomeStatement(transactions, categories, year),
+    [transactions, categories, year]
+  );
 
   const attivi = accounts.filter((a) => (balances[a.id] ?? 0) >= 0);
   const passivi = accounts.filter((a) => (balances[a.id] ?? 0) < 0);
@@ -30,11 +48,18 @@ export function BalanceSheetPage() {
   const totaleAttivita = netWorth.liquidita + netWorth.investimenti + netWorth.patrimonioImmobiliare;
   const totalePassivita = netWorth.debiti;
 
+  const { costi, ricavi, totaleCosti, totaleRicavi, risultato } = incomeStatement;
+  const utile = risultato > 0 ? risultato : 0;
+  const perdita = risultato < 0 ? -risultato : 0;
+  const pareggio = Math.max(totaleCosti + utile, totaleRicavi + perdita);
+
   return (
     <div className="space-y-4">
       <div>
         <h1 className="text-xl font-semibold text-slate-800">Bilancio e quadratura</h1>
-        <p className="text-sm text-slate-500">Stato patrimoniale complessivo e controllo di quadratura della partita doppia.</p>
+        <p className="text-sm text-slate-500">
+          Conto economico e stato patrimoniale, con controllo di quadratura della partita doppia.
+        </p>
       </div>
 
       <div className={`card flex items-center gap-3 ${quadratura.quadra && quadratura.quadraMetodi ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
@@ -57,6 +82,129 @@ export function BalanceSheetPage() {
           </div>
         </div>
       </div>
+
+      {/* ---------------- Conto Economico ---------------- */}
+      <div className="flex items-center justify-between flex-wrap gap-2 pt-2">
+        <h2 className="text-lg font-semibold text-slate-800">Conto Economico</h2>
+        <div>
+          <label className="label !mb-0 mr-2 inline">Esercizio</label>
+          <select className="input !inline-block !w-auto" value={year} onChange={(e) => setYear(Number(e.target.value))}>
+            {years.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div
+        className={`card flex items-center gap-3 flex-wrap ${risultato >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}
+      >
+        <div className="flex-1 min-w-[200px]">
+          <div className={`font-semibold ${risultato >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+            {risultato >= 0 ? `Utile d'esercizio ${year}` : `Perdita d'esercizio ${year}`}
+          </div>
+          <div className="text-sm text-slate-500">
+            Ricavi {formatCurrency(totaleRicavi)} − Costi {formatCurrency(totaleCosti)}
+          </div>
+        </div>
+        <span className={`text-2xl font-bold ${risultato >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+          {formatCurrency(risultato)}
+        </span>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="card !p-0 overflow-hidden">
+          <h3 className="font-semibold text-slate-700 px-4 pt-4 pb-2">Costi (Dare)</h3>
+          <div className="overflow-x-auto">
+            <table className="table-base">
+              <tbody>
+                {costi.map(({ category, amount }) => (
+                  <tr key={category.id}>
+                    <td>
+                      <span className="flex items-center gap-2">
+                        <CategoryIconCircle category={category} />
+                        {category.name}
+                      </span>
+                    </td>
+                    <td className="text-right font-medium">{formatCurrency(amount)}</td>
+                  </tr>
+                ))}
+                {costi.length === 0 && (
+                  <tr>
+                    <td colSpan={2} className="text-center text-slate-400 py-4">
+                      Nessun costo registrato nell'esercizio.
+                    </td>
+                  </tr>
+                )}
+                {utile > 0 && (
+                  <tr className="bg-emerald-50/60">
+                    <td className="font-medium text-emerald-700">Utile d'esercizio (a pareggio)</td>
+                    <td className="text-right font-semibold text-emerald-700">{formatCurrency(utile)}</td>
+                  </tr>
+                )}
+              </tbody>
+              <tfoot>
+                <tr className="border-t-2 border-slate-200">
+                  <td className="font-semibold text-slate-700">Totale a pareggio</td>
+                  <td className="text-right font-bold text-slate-800">{formatCurrency(pareggio)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <div className="card !p-0 overflow-hidden">
+          <h3 className="font-semibold text-slate-700 px-4 pt-4 pb-2">Ricavi (Avere)</h3>
+          <div className="overflow-x-auto">
+            <table className="table-base">
+              <tbody>
+                {ricavi.map(({ category, amount }) => (
+                  <tr key={category.id}>
+                    <td>
+                      <span className="flex items-center gap-2">
+                        <CategoryIconCircle category={category} />
+                        {category.name}
+                      </span>
+                    </td>
+                    <td className="text-right font-medium">{formatCurrency(amount)}</td>
+                  </tr>
+                ))}
+                {ricavi.length === 0 && (
+                  <tr>
+                    <td colSpan={2} className="text-center text-slate-400 py-4">
+                      Nessun ricavo registrato nell'esercizio.
+                    </td>
+                  </tr>
+                )}
+                {perdita > 0 && (
+                  <tr className="bg-red-50/60">
+                    <td className="font-medium text-red-700">Perdita d'esercizio (a pareggio)</td>
+                    <td className="text-right font-semibold text-red-700">{formatCurrency(perdita)}</td>
+                  </tr>
+                )}
+              </tbody>
+              <tfoot>
+                <tr className="border-t-2 border-slate-200">
+                  <td className="font-semibold text-slate-700">Totale a pareggio</td>
+                  <td className="text-right font-bold text-slate-800">{formatCurrency(pareggio)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <p className="text-xs text-slate-400">
+        Il Conto Economico riepiloga costi e ricavi dell'esercizio secondo la logica delle sezioni contrapposte
+        Dare/Avere della partita doppia (esclusi gli acquisti e le vendite di investimenti, che sono trasferimenti
+        patrimoniali e non componenti di reddito). Il risultato dell'esercizio confluisce nel Patrimonio Netto dello
+        Stato Patrimoniale.
+      </p>
+
+      {/* ---------------- Stato Patrimoniale ---------------- */}
+      <h2 className="text-lg font-semibold text-slate-800 pt-2">Stato Patrimoniale</h2>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="card">
@@ -84,7 +232,7 @@ export function BalanceSheetPage() {
 
       <div className="grid md:grid-cols-2 gap-4">
         <div className="card">
-          <h2 className="font-semibold text-slate-700 mb-2">Attività ({formatCurrency(totaleAttivita)})</h2>
+          <h3 className="font-semibold text-slate-700 mb-2">Attività ({formatCurrency(totaleAttivita)})</h3>
           <div className="overflow-x-auto">
           <table className="table-base">
             <tbody>
@@ -116,7 +264,7 @@ export function BalanceSheetPage() {
           </div>
         </div>
         <div className="card">
-          <h2 className="font-semibold text-slate-700 mb-2">Passività ({formatCurrency(totalePassivita)})</h2>
+          <h3 className="font-semibold text-slate-700 mb-2">Passività ({formatCurrency(totalePassivita)})</h3>
           {passivi.length === 0 ? (
             <p className="text-sm text-slate-400 py-4 text-center">Nessuna passività / debito registrato.</p>
           ) : (
