@@ -127,6 +127,12 @@ export function SettingsPage() {
           ))}
         </select>
       </div>
+
+      <div className="text-center">
+        <a href="#/privacy" className="text-xs text-slate-400 hover:text-slate-600 hover:underline">
+          Informativa sulla privacy
+        </a>
+      </div>
     </div>
   );
 }

@@ -164,6 +164,10 @@ export function AuthPage() {
             </p>
           </div>
         )}
+
+        <a href="#/privacy" className="block text-center text-xs text-slate-400 hover:text-slate-600 hover:underline mt-4">
+          Informativa sulla privacy
+        </a>
       </div>
     </div>
   );

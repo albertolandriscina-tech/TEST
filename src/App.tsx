@@ -24,6 +24,9 @@ const TransactionsPage = lazy(() =>
 const AnalysisPage = lazy(() => import('./components/Analysis/AnalysisPage').then((m) => ({ default: m.AnalysisPage })));
 const CategoriesPage = lazy(() => import('./components/Categories/CategoriesPage').then((m) => ({ default: m.CategoriesPage })));
 const RulesPage = lazy(() => import('./components/Rules/RulesPage').then((m) => ({ default: m.RulesPage })));
+const PrivacyPolicyPage = lazy(() =>
+  import('./components/Legal/PrivacyPolicyPage').then((m) => ({ default: m.PrivacyPolicyPage }))
+);
 const BudgetsPage = lazy(() => import('./components/Budgets/BudgetsPage').then((m) => ({ default: m.BudgetsPage })));
 const InvestmentsPage = lazy(() =>
   import('./components/Investments/InvestmentsPage').then((m) => ({ default: m.InvestmentsPage }))
@@ -101,6 +104,18 @@ export default function App() {
     mql.addEventListener('change', onChange);
     return () => mql.removeEventListener('change', onChange);
   }, [settings.theme, settings.colorTheme, settings.fontFamily]);
+
+  // Pagina pubblica, raggiungibile senza login: richiesta dal Play Store (Data Safety)
+  // e utile in generale perché chiunque possa leggerla prima di creare un account. Il
+  // controllo va dopo tutti gli hook (che devono essere chiamati incondizionatamente
+  // a ogni render) e prima del gate di autenticazione qui sotto.
+  if (location.pathname === '/privacy') {
+    return (
+      <Suspense fallback={<RouteLoader />}>
+        <PrivacyPolicyPage />
+      </Suspense>
+    );
+  }
 
   if (!PREVIEW_SKIP_AUTH) {
     if (isSupabaseConfigured && authInitializing) {
