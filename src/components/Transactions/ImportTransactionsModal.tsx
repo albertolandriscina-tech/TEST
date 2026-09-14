@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { AlertTriangle, CheckCircle2, Upload } from 'lucide-react';
+import { shallow } from 'zustand/shallow';
 import { useStore } from '../../store/useStore';
 import { Modal } from '../common/Modal';
 import {
@@ -36,7 +37,7 @@ const REQUIRED_FIELDS: ImportField[] = ['date', 'amount'];
 type Step = 'upload' | 'mapping' | 'preview';
 
 export function ImportTransactionsModal({ onClose }: Props) {
-  const accounts = useStore((s) => s.accounts.filter((a) => !a.archived));
+  const accounts = useStore((s) => s.accounts.filter((a) => !a.archived), shallow);
   const categories = useStore((s) => s.categories);
   const addAccount = useStore((s) => s.addAccount);
   const addCategory = useStore((s) => s.addCategory);

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { shallow } from 'zustand/shallow';
 import type { CategoryKind, Transaction } from '../../types';
 import { useStore } from '../../store/useStore';
 import { Modal } from '../common/Modal';
@@ -11,7 +12,7 @@ interface TransactionBulkEditFormProps {
 }
 
 export function TransactionBulkEditForm({ ids, transactions, onClose }: TransactionBulkEditFormProps) {
-  const accounts = useStore((s) => s.accounts.filter((a) => !a.archived));
+  const accounts = useStore((s) => s.accounts.filter((a) => !a.archived), shallow);
   const categories = useStore((s) => s.categories);
   const updateTransactions = useStore((s) => s.updateTransactions);
 

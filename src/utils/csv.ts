@@ -48,17 +48,24 @@ const TYPE_LABEL_EXPORT: Record<TransactionType, string> = {
   transfer: 'Giroconto',
 };
 
+// Se un campo testuale inizia con =, +, - o @, Excel/Sheets possono interpretarlo come
+// formula all'apertura del CSV ("CSV injection"): antepone un apice per neutralizzarlo,
+// senza alterare il testo visualizzato.
+function sanitizeCSVField(value: string): string {
+  return /^[=+\-@]/.test(value) ? `'${value}` : value;
+}
+
 export function transactionsToCSV(transactions: Transaction[], accounts: Account[], categories: Category[]): string {
   const accountName = (id: string) => accounts.find((a) => a.id === id)?.name ?? '';
   const rows: ExportRow[] = transactions.map((t) => ({
     Data: t.date,
     Tipo: TYPE_LABEL_EXPORT[t.type],
-    Descrizione: t.description,
+    Descrizione: sanitizeCSVField(t.description),
     Conto: accountName(t.accountId),
     ContoDestinazione: t.toAccountId ? accountName(t.toAccountId) : '',
     Categoria: t.type === 'transfer' ? '' : getCategoryPath(t.categoryId, categories).replace(' › ', ' > '),
     Importo: t.amount.toFixed(2),
-    Note: t.note ?? '',
+    Note: sanitizeCSVField(t.note ?? ''),
   }));
   return Papa.unparse(rows, { columns: ['Data', 'Tipo', 'Descrizione', 'Conto', 'ContoDestinazione', 'Categoria', 'Importo', 'Note'] });
 }

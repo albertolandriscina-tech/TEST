@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Landmark, Wallet, TrendingUp, CreditCard, Home, PiggyBank } from 'lucide-react';
+import { shallow } from 'zustand/shallow';
 import { useStore } from '../../../store/useStore';
 import { computeAllAccountBalances, signedBalanceForNetWorth } from '../../../utils/ledger';
 import { formatCurrency } from '../../../utils/format';
@@ -16,7 +17,7 @@ const ICONS: Record<AccountType, JSX.Element> = {
 };
 
 export function AccountsBalanceWidget() {
-  const accounts = useStore((s) => s.accounts.filter((a) => !a.archived));
+  const accounts = useStore((s) => s.accounts.filter((a) => !a.archived), shallow);
   const transactions = useStore((s) => s.transactions);
 
   const balances = useMemo(() => computeAllAccountBalances(accounts, transactions), [accounts, transactions]);

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { shallow } from 'zustand/shallow';
 import type { RecurrenceFrequency, RecurringTransaction, TransactionType } from '../../types';
 import { RECURRENCE_LABELS, TRANSACTION_TYPE_LABELS } from '../../types';
 import { useStore } from '../../store/useStore';
@@ -12,7 +13,7 @@ interface Props {
 }
 
 export function RecurringForm({ initial, onClose }: Props) {
-  const accounts = useStore((s) => s.accounts.filter((a) => !a.archived));
+  const accounts = useStore((s) => s.accounts.filter((a) => !a.archived), shallow);
   const categories = useStore((s) => s.categories);
   const addRecurring = useStore((s) => s.addRecurring);
   const updateRecurring = useStore((s) => s.updateRecurring);

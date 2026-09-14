@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { shallow } from 'zustand/shallow';
 import type { Investment, InvestmentOpType } from '../../types';
 import { useStore } from '../../store/useStore';
 import { todayISO } from '../../utils/id';
@@ -10,7 +11,7 @@ interface Props {
 }
 
 export function InvestmentTransactionForm({ investment, onClose }: Props) {
-  const accounts = useStore((s) => s.accounts.filter((a) => !a.archived));
+  const accounts = useStore((s) => s.accounts.filter((a) => !a.archived), shallow);
   const addInvestmentTransaction = useStore((s) => s.addInvestmentTransaction);
 
   const [type, setType] = useState<InvestmentOpType>('buy');

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { shallow } from 'zustand/shallow';
 import type { Transaction, TransactionType } from '../../types';
 import { TRANSACTION_TYPE_LABELS } from '../../types';
 import { useStore } from '../../store/useStore';
@@ -12,7 +13,7 @@ interface TransactionFormProps {
 }
 
 export function TransactionForm({ initial, onClose }: TransactionFormProps) {
-  const accounts = useStore((s) => s.accounts.filter((a) => !a.archived));
+  const accounts = useStore((s) => s.accounts.filter((a) => !a.archived), shallow);
   const categories = useStore((s) => s.categories);
   const addTransaction = useStore((s) => s.addTransaction);
   const updateTransaction = useStore((s) => s.updateTransaction);

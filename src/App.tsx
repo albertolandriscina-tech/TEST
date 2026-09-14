@@ -1,18 +1,7 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import { Menu, Wallet } from 'lucide-react';
 import { Sidebar } from './components/Layout/Sidebar';
-import { Dashboard } from './components/Dashboard/Dashboard';
-import { AccountsPage } from './components/Accounts/AccountsPage';
-import { TransactionsPage } from './components/Transactions/TransactionsPage';
-import { AnalysisPage } from './components/Analysis/AnalysisPage';
-import { CategoriesPage } from './components/Categories/CategoriesPage';
-import { BudgetsPage } from './components/Budgets/BudgetsPage';
-import { InvestmentsPage } from './components/Investments/InvestmentsPage';
-import { AssetsPage } from './components/Assets/AssetsPage';
-import { BalanceSheetPage } from './components/BalanceSheet/BalanceSheetPage';
-import { RecurringPage } from './components/Recurring/RecurringPage';
-import { SettingsPage } from './components/Settings/SettingsPage';
 import { AuthPage } from './components/Auth/AuthPage';
 import { useStore } from './store/useStore';
 import { useAuthStore } from './store/authStore';
@@ -21,11 +10,42 @@ import { useCloudSync } from './hooks/useCloudSync';
 import { isSupabaseConfigured } from './lib/supabaseClient';
 import { applyAppearance } from './utils/theme';
 
+// Ogni pagina è caricata solo quando l'utente la visita (bundle più leggero al primo
+// avvio, soprattutto per chi apre solo la Dashboard e non usa mai le altre sezioni).
+const Dashboard = lazy(() => import('./components/Dashboard/Dashboard').then((m) => ({ default: m.Dashboard })));
+const AccountsPage = lazy(() => import('./components/Accounts/AccountsPage').then((m) => ({ default: m.AccountsPage })));
+const TransactionsPage = lazy(() =>
+  import('./components/Transactions/TransactionsPage').then((m) => ({ default: m.TransactionsPage }))
+);
+const AnalysisPage = lazy(() => import('./components/Analysis/AnalysisPage').then((m) => ({ default: m.AnalysisPage })));
+const CategoriesPage = lazy(() => import('./components/Categories/CategoriesPage').then((m) => ({ default: m.CategoriesPage })));
+const BudgetsPage = lazy(() => import('./components/Budgets/BudgetsPage').then((m) => ({ default: m.BudgetsPage })));
+const InvestmentsPage = lazy(() =>
+  import('./components/Investments/InvestmentsPage').then((m) => ({ default: m.InvestmentsPage }))
+);
+const AssetsPage = lazy(() => import('./components/Assets/AssetsPage').then((m) => ({ default: m.AssetsPage })));
+const BalanceSheetPage = lazy(() =>
+  import('./components/BalanceSheet/BalanceSheetPage').then((m) => ({ default: m.BalanceSheetPage }))
+);
+const RecurringPage = lazy(() => import('./components/Recurring/RecurringPage').then((m) => ({ default: m.RecurringPage })));
+const SettingsPage = lazy(() => import('./components/Settings/SettingsPage').then((m) => ({ default: m.SettingsPage })));
+
 const PREVIEW_SKIP_AUTH = import.meta.env.VITE_PREVIEW_SKIP_AUTH === 'true';
 
 function FullScreenLoader() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 dark:bg-slate-900">
+      <div className="flex items-center gap-2 text-slate-400 text-sm">
+        <span className="w-4 h-4 rounded-full border-2 border-slate-300 border-t-primary-600 animate-spin" />
+        Caricamento…
+      </div>
+    </div>
+  );
+}
+
+function RouteLoader() {
+  return (
+    <div className="flex items-center justify-center py-24">
       <div className="flex items-center gap-2 text-slate-400 text-sm">
         <span className="w-4 h-4 rounded-full border-2 border-slate-300 border-t-primary-600 animate-spin" />
         Caricamento…
@@ -109,19 +129,21 @@ export default function App() {
             <div className="bg-primary-600 text-white text-sm text-center py-1.5 px-3">{notice}</div>
           )}
           <div className="max-w-7xl mx-auto p-4 sm:p-6">
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/movimenti" element={<TransactionsPage />} />
-              <Route path="/analisi" element={<AnalysisPage />} />
-              <Route path="/conti" element={<AccountsPage />} />
-              <Route path="/categorie" element={<CategoriesPage />} />
-              <Route path="/budget" element={<BudgetsPage />} />
-              <Route path="/investimenti" element={<InvestmentsPage />} />
-              <Route path="/patrimonio" element={<AssetsPage />} />
-              <Route path="/bilancio" element={<BalanceSheetPage />} />
-              <Route path="/ricorrenti" element={<RecurringPage />} />
-              <Route path="/impostazioni" element={<SettingsPage />} />
-            </Routes>
+            <Suspense fallback={<RouteLoader />}>
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/movimenti" element={<TransactionsPage />} />
+                <Route path="/analisi" element={<AnalysisPage />} />
+                <Route path="/conti" element={<AccountsPage />} />
+                <Route path="/categorie" element={<CategoriesPage />} />
+                <Route path="/budget" element={<BudgetsPage />} />
+                <Route path="/investimenti" element={<InvestmentsPage />} />
+                <Route path="/patrimonio" element={<AssetsPage />} />
+                <Route path="/bilancio" element={<BalanceSheetPage />} />
+                <Route path="/ricorrenti" element={<RecurringPage />} />
+                <Route path="/impostazioni" element={<SettingsPage />} />
+              </Routes>
+            </Suspense>
           </div>
         </main>
       </div>

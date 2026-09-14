@@ -2,10 +2,15 @@
 // Fa da proxy verso Yahoo Finance lato server: il browser chiama questo stesso
 // dominio (nessun problema di CORS), e questa funzione inoltra la richiesta a
 // Yahoo, che invece non permette chiamate dirette da browser.
+// I ticker Yahoo Finance sono alfanumerici con al più punto/trattino/caret come
+// separatori (es. "AAPL", "SWDA.MI", "^GSPC", "BRK-B"): un formato più permissivo non
+// serve e riduce l'uso di questo endpoint pubblico come proxy generico verso terzi.
+const TICKER_PATTERN = /^[A-Za-z0-9.\-^=]{1,20}$/;
+
 export default async function handler(req: any, res: any) {
   const ticker = typeof req.query?.ticker === 'string' ? req.query.ticker.trim() : '';
-  if (!ticker) {
-    res.status(400).json({ error: 'Parametro "ticker" mancante.' });
+  if (!ticker || !TICKER_PATTERN.test(ticker)) {
+    res.status(400).json({ error: 'Parametro "ticker" mancante o non valido.' });
     return;
   }
 

@@ -17,7 +17,10 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => {
           const ticker = new URL(path, 'http://localhost').searchParams.get('ticker') ?? '';
-          return `/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1d&range=1d`;
+          // Stesso formato accettato da api/quote.ts (usato in produzione): evita di
+          // inoltrare a Yahoo richieste con ticker vuoti o palesemente malformati.
+          const safeTicker = /^[A-Za-z0-9.\-^=]{1,20}$/.test(ticker) ? ticker : '';
+          return `/v8/finance/chart/${encodeURIComponent(safeTicker)}?interval=1d&range=1d`;
         },
       },
     },
