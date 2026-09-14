@@ -3,6 +3,7 @@ import { Route, Routes, useLocation } from 'react-router-dom';
 import { Menu, Wallet } from 'lucide-react';
 import { Sidebar } from './components/Layout/Sidebar';
 import { AuthPage } from './components/Auth/AuthPage';
+import { InstallAppPrompt } from './components/common/InstallAppPrompt';
 import { useStore } from './store/useStore';
 import { useAuthStore } from './store/authStore';
 import { useSyncStatus } from './store/syncStatus';
@@ -22,6 +23,7 @@ const TransactionsPage = lazy(() =>
 );
 const AnalysisPage = lazy(() => import('./components/Analysis/AnalysisPage').then((m) => ({ default: m.AnalysisPage })));
 const CategoriesPage = lazy(() => import('./components/Categories/CategoriesPage').then((m) => ({ default: m.CategoriesPage })));
+const RulesPage = lazy(() => import('./components/Rules/RulesPage').then((m) => ({ default: m.RulesPage })));
 const BudgetsPage = lazy(() => import('./components/Budgets/BudgetsPage').then((m) => ({ default: m.BudgetsPage })));
 const InvestmentsPage = lazy(() =>
   import('./components/Investments/InvestmentsPage').then((m) => ({ default: m.InvestmentsPage }))
@@ -114,6 +116,7 @@ export default function App() {
 
   return (
     <div className="flex h-screen w-full overflow-hidden">
+      <InstallAppPrompt />
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="flex-1 flex flex-col min-w-0">
         <header className="flex items-center gap-3 px-4 h-14 border-b border-slate-200 bg-white shrink-0 lg:hidden">
@@ -140,6 +143,7 @@ export default function App() {
                 <Route path="/conti" element={<AccountsPage />} />
                 <Route path="/conti/:id" element={<AccountDetailPage />} />
                 <Route path="/categorie" element={<CategoriesPage />} />
+                <Route path="/regole" element={<RulesPage />} />
                 <Route path="/budget" element={<BudgetsPage />} />
                 <Route path="/investimenti" element={<InvestmentsPage />} />
                 <Route path="/patrimonio" element={<AssetsPage />} />

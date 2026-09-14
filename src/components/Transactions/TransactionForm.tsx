@@ -6,6 +6,7 @@ import { TRANSACTION_TYPE_LABELS } from '../../types';
 import { useStore } from '../../store/useStore';
 import { todayISO } from '../../utils/id';
 import { round2 } from '../../utils/ledger';
+import { findMatchingRule } from '../../utils/rules';
 import { formatCurrency } from '../../utils/format';
 import { Modal } from '../common/Modal';
 import { CategorySelect } from '../common/CategorySelect';
@@ -23,6 +24,7 @@ interface SplitRow {
 export function TransactionForm({ initial, onClose }: TransactionFormProps) {
   const accounts = useStore((s) => s.accounts.filter((a) => !a.archived), shallow);
   const categories = useStore((s) => s.categories);
+  const categorizationRules = useStore((s) => s.categorizationRules);
   const addTransaction = useStore((s) => s.addTransaction);
   const updateTransaction = useStore((s) => s.updateTransaction);
 
@@ -40,6 +42,16 @@ export function TransactionForm({ initial, onClose }: TransactionFormProps) {
   const [note, setNote] = useState(initial?.note ?? '');
   const [error, setError] = useState<string | null>(null);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
+  const [autoRuleName, setAutoRuleName] = useState<string | null>(null);
+
+  const suggestCategoryFromDescription = () => {
+    if (isSplit || type === 'transfer' || categoryId || !accountId || !description.trim()) return;
+    const rule = findMatchingRule(categorizationRules, { description, type, accountId });
+    if (rule) {
+      setCategoryId(rule.categoryId);
+      setAutoRuleName(rule.name);
+    }
+  };
 
   useEffect(() => {
     if (!savedMessage) return;
@@ -157,6 +169,7 @@ export function TransactionForm({ initial, onClose }: TransactionFormProps) {
                 setCategoryId('');
                 setIsSplit(false);
                 setSplits([]);
+                setAutoRuleName(null);
               }}
               className={`btn justify-center ${
                 type === t
@@ -194,7 +207,13 @@ export function TransactionForm({ initial, onClose }: TransactionFormProps) {
 
         <div>
           <label className="label">Descrizione</label>
-          <input className="input" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Es. Spesa supermercato" />
+          <input
+            className="input"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            onBlur={suggestCategoryFromDescription}
+            placeholder="Es. Spesa supermercato"
+          />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -238,7 +257,20 @@ export function TransactionForm({ initial, onClose }: TransactionFormProps) {
               {isSplit ? (
                 <p className="input flex items-center text-slate-400 !cursor-default">Frazionato su {splits.length} categorie</p>
               ) : (
-                <CategorySelect categories={categories} kind={type} value={categoryId} onChange={setCategoryId} />
+                <>
+                  <CategorySelect
+                    categories={categories}
+                    kind={type}
+                    value={categoryId}
+                    onChange={(id) => {
+                      setCategoryId(id);
+                      setAutoRuleName(null);
+                    }}
+                  />
+                  {autoRuleName && (
+                    <p className="text-xs text-primary-600 mt-1">Categoria assegnata dalla regola "{autoRuleName}".</p>
+                  )}
+                </>
               )}
             </div>
           )}

@@ -15,6 +15,7 @@ import {
   type ParsedCSV,
 } from '../../utils/csv';
 import { formatCurrency, formatDate } from '../../utils/format';
+import { findMatchingRule } from '../../utils/rules';
 import type { Transaction } from '../../types';
 
 interface Props {
@@ -39,6 +40,7 @@ type Step = 'upload' | 'mapping' | 'preview';
 export function ImportTransactionsModal({ onClose }: Props) {
   const accounts = useStore((s) => s.accounts.filter((a) => !a.archived), shallow);
   const categories = useStore((s) => s.categories);
+  const categorizationRules = useStore((s) => s.categorizationRules);
   const addAccount = useStore((s) => s.addAccount);
   const addCategory = useStore((s) => s.addCategory);
   const addTransactions = useStore((s) => s.addTransactions);
@@ -114,6 +116,12 @@ export function ImportTransactionsModal({ onClose }: Props) {
           categoriesToCreate.set(`${kind}|${path.root.toLowerCase()}|${(path.child ?? '').toLowerCase()}`, { kind, path });
         }
       }
+      // Nessuna categoria nel file (o non riconosciuta): prova a dedurla dalle regole
+      // automatiche in base alla descrizione, come per l'inserimento manuale.
+      if (row.type !== 'transfer' && !categoryId) {
+        const rule = findMatchingRule(categorizationRules, { description: row.description, type: row.type, accountId });
+        if (rule) categoryId = rule.categoryId;
+      }
 
       return { row, ok: true as const, accountId, toAccountId, categoryId };
     });
@@ -123,10 +131,13 @@ export function ImportTransactionsModal({ onClose }: Props) {
       accountsToCreate: Array.from(accountsToCreate),
       categoriesToCreate: Array.from(categoriesToCreate.values()),
     };
-  }, [interpretedRows, accounts, categories, defaultAccountId, createMissingAccounts, createMissingCategories]);
+  }, [interpretedRows, accounts, categories, categorizationRules, defaultAccountId, createMissingAccounts, createMissingCategories]);
 
   const validCount = plan.resolved.filter((r) => r.ok).length;
   const errorCount = plan.resolved.length - validCount;
+  const ruleAppliedCount = plan.resolved.filter(
+    (r) => r.ok && !r.row.categoryName && r.row.type !== 'transfer' && r.categoryId
+  ).length;
 
   const confirmImport = () => {
     const accountIdByName = new Map<string, string>();
@@ -319,6 +330,11 @@ export function ImportTransactionsModal({ onClose }: Props) {
                   <span className="badge bg-primary-50 text-primary-600">
                     {plan.categoriesToCreate.length} nuove categorie:{' '}
                     {plan.categoriesToCreate.map((c) => (c.path.child ? `${c.path.root} > ${c.path.child}` : c.path.root)).join(', ')}
+                  </span>
+                )}
+                {ruleAppliedCount > 0 && (
+                  <span className="badge bg-primary-50 text-primary-600">
+                    {ruleAppliedCount} categorizzate da regole automatiche
                   </span>
                 )}
               </div>

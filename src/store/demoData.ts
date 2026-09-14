@@ -3,6 +3,7 @@ import type {
   Account,
   Budget,
   Category,
+  CategorizationRule,
   Investment,
   InvestmentTransaction,
   PatrimonioAsset,
@@ -33,6 +34,7 @@ export interface DemoDataset {
   patrimonioAssets: PatrimonioAsset[];
   recurringTransactions: RecurringTransaction[];
   portfolioSnapshots: PortfolioSnapshot[];
+  categorizationRules: CategorizationRule[];
 }
 
 /** Dataset di esempio realistico (12 mesi di storico) per mostrare l'app già popolata. */
@@ -247,6 +249,46 @@ export function buildDemoDataset(): DemoDataset {
     },
   ];
 
+  // ---- Regole automatiche di categorizzazione di esempio ----
+  const categorizationRules: CategorizationRule[] = [
+    {
+      id: newId(),
+      name: 'Supermercato',
+      active: true,
+      matchType: 'expense',
+      keywords: ['supermercato', 'esselunga', 'coop', 'conad', 'carrefour', 'lidl'],
+      categoryId: cat('Supermercato'),
+      createdAt: nowISO,
+    },
+    {
+      id: newId(),
+      name: 'Carburante',
+      active: true,
+      matchType: 'expense',
+      keywords: ['carburante', 'benzina', 'rifornimento', 'eni', 'q8', 'esso'],
+      categoryId: cat('Carburante'),
+      createdAt: nowISO,
+    },
+    {
+      id: newId(),
+      name: 'Bollette',
+      active: true,
+      matchType: 'expense',
+      keywords: ['bolletta', 'bollette', 'enel', 'gas', 'acqua'],
+      categoryId: cat('Bollette'),
+      createdAt: nowISO,
+    },
+    {
+      id: newId(),
+      name: 'Stipendio',
+      active: true,
+      matchType: 'income',
+      keywords: ['stipendio', 'salario'],
+      categoryId: cat('Stipendio'),
+      createdAt: nowISO,
+    },
+  ];
+
   // ---- Storico valore di portafoglio (per la sezione "Analisi") ----
   // Non avendo quotazioni storiche reali, si ricostruisce un andamento plausibile
   // ancorato al valore corrente realmente calcolato, con il capitale investito
@@ -284,5 +326,6 @@ export function buildDemoDataset(): DemoDataset {
     patrimonioAssets,
     recurringTransactions,
     portfolioSnapshots,
+    categorizationRules,
   };
 }

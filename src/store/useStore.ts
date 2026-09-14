@@ -4,6 +4,7 @@ import type {
   AppSettings,
   Budget,
   Category,
+  CategorizationRule,
   DashboardWidgetLayout,
   DashboardWidgetType,
   Investment,
@@ -25,6 +26,7 @@ import { buildDemoDataset } from './demoData';
 import { buildDefaultLayout } from '../dashboardWidgets';
 import { computeDueOccurrences, generateTransactionsForRule } from '../utils/recurring';
 import { computeAllHoldings, round2 } from '../utils/ledger';
+import { findMatchingRule } from '../utils/rules';
 import { simulateNewPrice } from '../utils/priceSimulation';
 import { fetchYahooQuote } from '../utils/marketData';
 
@@ -48,6 +50,7 @@ interface State {
   patrimonioAssets: PatrimonioAsset[];
   recurringTransactions: RecurringTransaction[];
   portfolioSnapshots: PortfolioSnapshot[];
+  categorizationRules: CategorizationRule[];
   selectedTransactionIds: string[];
   dashboardLayout: DashboardWidgetLayout[];
   hiddenDashboardWidgets: DashboardWidgetType[];
@@ -103,6 +106,16 @@ interface State {
   resetAllData: () => void;
   loadDemoData: () => void;
 
+  // Regole automatiche di categorizzazione
+  addCategorizationRule: (r: Omit<CategorizationRule, 'id' | 'createdAt'>) => string;
+  updateCategorizationRule: (id: string, patch: Partial<CategorizationRule>) => void;
+  deleteCategorizationRule: (id: string) => void;
+  /** Scambia la regola con quella adiacente per riordinare la priorità di applicazione. */
+  moveCategorizationRule: (id: string, direction: 'up' | 'down') => void;
+  /** Applica le regole attive a tutti i movimenti (entrata/uscita, non frazionati) privi di
+   * categoria, nell'ordine delle regole. Restituisce il numero di movimenti aggiornati. */
+  applyRulesToUncategorized: () => number;
+
   // Dashboard personalizzabile
   setDashboardLayout: (layout: DashboardWidgetLayout[]) => void;
   hideDashboardWidget: (type: DashboardWidgetType) => void;
@@ -129,6 +142,7 @@ export const useStore = create<State>()(
       patrimonioAssets: [],
       recurringTransactions: [],
       portfolioSnapshots: [],
+      categorizationRules: [],
       selectedTransactionIds: [],
       dashboardLayout: buildDefaultLayout(),
       hiddenDashboardWidgets: [],
@@ -147,6 +161,7 @@ export const useStore = create<State>()(
         set((s) => ({
           accounts: s.accounts.filter((a) => a.id !== id),
           transactions: s.transactions.filter((t) => t.accountId !== id && t.toAccountId !== id),
+          categorizationRules: s.categorizationRules.map((r) => (r.accountId === id ? { ...r, accountId: null } : r)),
         })),
 
       addCategory: (c) => {
@@ -165,6 +180,9 @@ export const useStore = create<State>()(
             splits: t.splits ? t.splits.map((sp) => (sp.categoryId === id ? { ...sp, categoryId: null } : sp)) : t.splits,
           })),
           budgets: s.budgets.filter((b) => b.categoryId !== id),
+          // Una regola senza categoria non ha senso: le regole che assegnavano la
+          // categoria eliminata vengono rimosse insieme ad essa.
+          categorizationRules: s.categorizationRules.filter((r) => r.categoryId !== id),
         })),
       moveCategory: (id, direction) =>
         set((s) => {
@@ -183,6 +201,47 @@ export const useStore = create<State>()(
           [next[posA], next[posB]] = [next[posB], next[posA]];
           return { categories: next };
         }),
+
+      addCategorizationRule: (r) => {
+        const id = newId();
+        set((s) => ({
+          categorizationRules: [...s.categorizationRules, { ...r, id, createdAt: new Date().toISOString() }],
+        }));
+        return id;
+      },
+      updateCategorizationRule: (id, patch) =>
+        set((s) => ({
+          categorizationRules: s.categorizationRules.map((r) => (r.id === id ? { ...r, ...patch } : r)),
+        })),
+      deleteCategorizationRule: (id) =>
+        set((s) => ({ categorizationRules: s.categorizationRules.filter((r) => r.id !== id) })),
+      moveCategorizationRule: (id, direction) =>
+        set((s) => {
+          const idx = s.categorizationRules.findIndex((r) => r.id === id);
+          if (idx < 0) return {};
+          const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+          if (swapIdx < 0 || swapIdx >= s.categorizationRules.length) return {};
+          const next = [...s.categorizationRules];
+          [next[idx], next[swapIdx]] = [next[swapIdx], next[idx]];
+          return { categorizationRules: next };
+        }),
+      applyRulesToUncategorized: () => {
+        const s = get();
+        let count = 0;
+        const transactions = s.transactions.map((t) => {
+          if (t.type === 'transfer' || t.categoryId || (t.splits && t.splits.length > 0)) return t;
+          const rule = findMatchingRule(s.categorizationRules, {
+            description: t.description,
+            type: t.type,
+            accountId: t.accountId,
+          });
+          if (!rule) return t;
+          count += 1;
+          return { ...t, categoryId: rule.categoryId };
+        });
+        if (count > 0) set({ transactions });
+        return count;
+      },
 
       addTransaction: (t) =>
         set((s) => ({
@@ -473,6 +532,7 @@ export const useStore = create<State>()(
           patrimonioAssets: [],
           recurringTransactions: [],
           portfolioSnapshots: [],
+          categorizationRules: [],
           selectedTransactionIds: [],
         }),
 
@@ -488,6 +548,7 @@ export const useStore = create<State>()(
           patrimonioAssets: demo.patrimonioAssets,
           recurringTransactions: demo.recurringTransactions,
           portfolioSnapshots: demo.portfolioSnapshots,
+          categorizationRules: demo.categorizationRules,
           selectedTransactionIds: [],
           dashboardLayout: buildDefaultLayout(),
           hiddenDashboardWidgets: [],

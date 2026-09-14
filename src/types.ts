@@ -239,6 +239,24 @@ export interface PatrimonioAsset {
   note?: string;
 }
 
+// ---------- Regole automatiche di categorizzazione ----------
+
+/** Una regola assegna automaticamente una categoria ai movimenti la cui descrizione
+ * contiene una delle parole chiave indicate (confronto case/accent-insensitive). Le
+ * regole vengono valutate nell'ordine in cui compaiono nell'array (come le categorie):
+ * vince la prima che corrisponde. Usate sia per suggerire la categoria durante
+ * l'inserimento manuale sia per categorizzare automaticamente le righe importate da CSV. */
+export interface CategorizationRule {
+  id: string;
+  name: string;
+  active: boolean;
+  matchType: TransactionType | 'any'; // limita la regola a entrate, uscite o entrambe
+  keywords: string[]; // corrispondenza se la descrizione contiene ALMENO una parola chiave (OR)
+  accountId?: string | null; // opzionale: la regola si applica solo a questo conto
+  categoryId: string; // categoria assegnata quando la regola scatta
+  createdAt: string;
+}
+
 // ---------- Movimenti ricorrenti ----------
 
 export type RecurrenceFrequency = 'daily' | 'weekly' | 'monthly' | 'yearly';
