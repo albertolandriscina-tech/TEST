@@ -11,6 +11,7 @@ import {
   CATEGORY_COLOR_PALETTE,
   CATEGORY_ICONS,
   CATEGORY_ICON_KEYS,
+  CATEGORY_ICON_SEARCH_TERMS,
   getCategoryColor,
   getCategoryIconKey,
 } from '../../utils/categoryStyle';
@@ -46,6 +47,13 @@ function CategoryForm({
   const [icon, setIcon] = useState<string>(getCategoryIconKey(initial));
   const [color, setColor] = useState<string>(getCategoryColor(initial ?? { id: 'new-category' }));
   const [nature, setNature] = useState<ExpenseNature | ''>(initial?.nature ?? '');
+  const [iconSearch, setIconSearch] = useState('');
+
+  const filteredIconKeys = CATEGORY_ICON_KEYS.filter((key) => {
+    const query = iconSearch.trim().toLowerCase();
+    if (!query) return true;
+    return key.includes(query) || (CATEGORY_ICON_SEARCH_TERMS[key] ?? '').includes(query);
+  });
 
   const handleParentChange = (value: string) => {
     setParentId(value);
@@ -141,8 +149,17 @@ function CategoryForm({
 
         <div>
           <label className="label">Icona</label>
+          <input
+            className="input mb-1.5"
+            value={iconSearch}
+            onChange={(e) => setIconSearch(e.target.value)}
+            placeholder="Cerca icona... (es. casa, auto, sport)"
+          />
           <div className="grid grid-cols-8 gap-1.5 max-h-40 overflow-y-auto border border-slate-200 rounded-lg p-2">
-            {CATEGORY_ICON_KEYS.map((key) => {
+            {filteredIconKeys.length === 0 && (
+              <p className="col-span-8 text-center text-xs text-slate-400 py-3">Nessuna icona trovata.</p>
+            )}
+            {filteredIconKeys.map((key) => {
               const Icon = CATEGORY_ICONS[key];
               const selected = icon === key;
               return (
