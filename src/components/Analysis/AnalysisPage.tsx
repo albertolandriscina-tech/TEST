@@ -9,6 +9,7 @@ import {
   buildDailyCashFlow,
   buildNatureBreakdown,
   computeCashFlow,
+  isInvestmentMovementCategory,
   pctDelta,
   type CategoryBreakdownItem,
   type NatureBreakdownItem,
@@ -322,21 +323,34 @@ export function AnalysisPage() {
   const otherIncome = Math.max(0, round2(entrate - incomeBreakdown.reduce((s, i) => s + i.amount, 0)));
   const otherExpense = Math.max(0, round2(uscite - expenseBreakdown.reduce((s, i) => s + i.amount, 0)));
 
+  const categoryById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
   const topIncome = useMemo(
     () =>
       transactions
-        .filter((t) => t.type === 'income' && !t.investmentTxId && t.date >= fromISO && t.date <= toISO)
+        .filter(
+          (t) =>
+            t.type === 'income' &&
+            t.date >= fromISO &&
+            t.date <= toISO &&
+            !isInvestmentMovementCategory(t.categoryId ? categoryById.get(t.categoryId) : undefined)
+        )
         .sort((a, b) => b.amount - a.amount)
         .slice(0, 5),
-    [transactions, fromISO, toISO]
+    [transactions, categoryById, fromISO, toISO]
   );
   const topExpense = useMemo(
     () =>
       transactions
-        .filter((t) => t.type === 'expense' && !t.investmentTxId && t.date >= fromISO && t.date <= toISO)
+        .filter(
+          (t) =>
+            t.type === 'expense' &&
+            t.date >= fromISO &&
+            t.date <= toISO &&
+            !isInvestmentMovementCategory(t.categoryId ? categoryById.get(t.categoryId) : undefined)
+        )
         .sort((a, b) => b.amount - a.amount)
         .slice(0, 5),
-    [transactions, fromISO, toISO]
+    [transactions, categoryById, fromISO, toISO]
   );
 
   return (

@@ -9,11 +9,23 @@ import {
   type InvestmentHolding,
 } from './ledger';
 import { MONTH_NAMES_SHORT_IT } from './format';
+import { SYSTEM_CATEGORY_INVESTMENT_BUY, SYSTEM_CATEGORY_INVESTMENT_SELL } from '../store/seed';
 
 /** Variazione percentuale tra due valori; null = "n/d" (nessun confronto significativo, es. da 0). */
 export function pctDelta(current: number, previous: number): number | null {
   if (previous === 0) return current === 0 ? 0 : null;
   return ((current - previous) / Math.abs(previous)) * 100;
+}
+
+/**
+ * Vero solo per le categorie di sistema "Acquisti investimenti"/"Vendite investimenti":
+ * rappresentano uno spostamento di capitale verso/da uno strumento, non una spesa o un'entrata
+ * reale, quindi vanno escluse dalle scomposizioni per categoria/natura. Le commissioni di
+ * investimento, pur essendo anch'esse una categoria di sistema, sono un'uscita reale e vanno
+ * invece incluse.
+ */
+export function isInvestmentMovementCategory(category: Category | null | undefined): boolean {
+  return !!category?.system && (category.name === SYSTEM_CATEGORY_INVESTMENT_BUY || category.name === SYSTEM_CATEGORY_INVESTMENT_SELL);
 }
 
 export interface CashFlowBucket {
@@ -105,10 +117,17 @@ export function buildCategoryBreakdown(
   fromISO: string,
   toISO: string
 ): CategoryBreakdownItem[] {
-  const filtered = transactions.filter((t) => t.type === type && !t.investmentTxId && t.date >= fromISO && t.date <= toISO);
+  const categoryById = new Map(categories.map((c) => [c.id, c]));
+  const filtered = transactions.filter(
+    (t) =>
+      t.type === type &&
+      t.date >= fromISO &&
+      t.date <= toISO &&
+      !isInvestmentMovementCategory(t.categoryId ? categoryById.get(t.categoryId) : undefined)
+  );
   const total = filtered.reduce((s, t) => s + t.amount, 0);
 
-  const roots = categories.filter((c) => c.kind === type && !c.parentId && !c.archived && !c.system);
+  const roots = categories.filter((c) => c.kind === type && !c.parentId && !c.archived && !isInvestmentMovementCategory(c));
   return roots
     .map((root) => {
       const ids = getCategoryAndDescendantIds(root.id, categories);
@@ -287,8 +306,13 @@ export function buildNatureBreakdown(
   fromISO: string,
   toISO: string
 ): NatureBreakdownItem[] {
+  const categoryById = new Map(categories.map((c) => [c.id, c]));
   const filtered = transactions.filter(
-    (t) => t.type === 'expense' && !t.investmentTxId && t.date >= fromISO && t.date <= toISO
+    (t) =>
+      t.type === 'expense' &&
+      t.date >= fromISO &&
+      t.date <= toISO &&
+      !isInvestmentMovementCategory(t.categoryId ? categoryById.get(t.categoryId) : undefined)
   );
   const totals: Record<ExpenseNature | 'non_classificata', number> = {
     obbligatoria: 0,
