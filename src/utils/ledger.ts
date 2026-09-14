@@ -242,7 +242,7 @@ export function computeInvestmentHolding(
   for (const op of ops) {
     if (op.type === 'buy') {
       quantity += op.quantity;
-      costBasis += op.quantity * op.price + op.fees;
+      costBasis += op.quantity * op.price;
     } else {
       const avgPriceBefore = quantity > 0 ? costBasis / quantity : 0;
       quantity -= op.quantity;
