@@ -62,6 +62,8 @@ interface State {
   addCategory: (c: Omit<Category, 'id'>) => string;
   updateCategory: (id: string, patch: Partial<Category>) => void;
   deleteCategory: (id: string) => void;
+  /** Scambia la categoria con il fratello adiacente (stesso kind e stesso genitore) per riordinarla. */
+  moveCategory: (id: string, direction: 'up' | 'down') => void;
 
   // Movimenti
   addTransaction: (t: Omit<Transaction, 'id' | 'createdAt'>) => void;
@@ -164,6 +166,23 @@ export const useStore = create<State>()(
           })),
           budgets: s.budgets.filter((b) => b.categoryId !== id),
         })),
+      moveCategory: (id, direction) =>
+        set((s) => {
+          const cat = s.categories.find((c) => c.id === id);
+          if (!cat) return {};
+          const siblingIds = s.categories
+            .filter((c) => c.kind === cat.kind && c.parentId === cat.parentId)
+            .map((c) => c.id);
+          const idx = siblingIds.indexOf(id);
+          const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+          if (swapIdx < 0 || swapIdx >= siblingIds.length) return {};
+          const otherId = siblingIds[swapIdx];
+          const posA = s.categories.findIndex((c) => c.id === id);
+          const posB = s.categories.findIndex((c) => c.id === otherId);
+          const next = [...s.categories];
+          [next[posA], next[posB]] = [next[posB], next[posA]];
+          return { categories: next };
+        }),
 
       addTransaction: (t) =>
         set((s) => ({

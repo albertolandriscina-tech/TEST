@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2, Pencil, CornerDownRight, Check } from 'lucide-react';
+import { Plus, Trash2, Pencil, CornerDownRight, Check, ChevronUp, ChevronDown } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import type { Category, CategoryKind, ExpenseNature } from '../../types';
 import { EXPENSE_NATURE_COLORS, EXPENSE_NATURE_LABELS } from '../../types';
@@ -197,6 +197,7 @@ function CategoryColumn({ kind, title }: { kind: CategoryKind; title: string }) 
   const addCategory = useStore((s) => s.addCategory);
   const updateCategory = useStore((s) => s.updateCategory);
   const deleteCategory = useStore((s) => s.deleteCategory);
+  const moveCategory = useStore((s) => s.moveCategory);
 
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
@@ -213,7 +214,7 @@ function CategoryColumn({ kind, title }: { kind: CategoryKind; title: string }) 
         </button>
       </div>
       <ul className="space-y-1">
-        {roots.map((root) => {
+        {roots.map((root, rootIndex) => {
           const children = categories.filter((c) => c.parentId === root.id);
           return (
             <li key={root.id}>
@@ -224,20 +225,40 @@ function CategoryColumn({ kind, title }: { kind: CategoryKind; title: string }) 
                   {root.system && <span className="badge bg-slate-100 text-slate-500 shrink-0">sistema</span>}
                   {root.nature && <NatureBadge nature={root.nature} />}
                 </span>
-                {!root.system && (
-                  <div className="flex gap-1 shrink-0">
-                    <button className="btn-ghost !p-1" onClick={() => setEditing(root)}>
-                      <Pencil size={13} />
+                <div className="flex items-center shrink-0">
+                  <div className="flex flex-col">
+                    <button
+                      className="btn-ghost !p-0 !h-4 !w-5 flex items-center justify-center disabled:opacity-25 disabled:pointer-events-none"
+                      onClick={() => moveCategory(root.id, 'up')}
+                      disabled={rootIndex === 0}
+                      title="Sposta su"
+                    >
+                      <ChevronUp size={12} />
                     </button>
-                    <button className="btn-ghost !p-1 text-red-500" onClick={() => setDeleting(root)}>
-                      <Trash2 size={13} />
+                    <button
+                      className="btn-ghost !p-0 !h-4 !w-5 flex items-center justify-center disabled:opacity-25 disabled:pointer-events-none"
+                      onClick={() => moveCategory(root.id, 'down')}
+                      disabled={rootIndex === roots.length - 1}
+                      title="Sposta giù"
+                    >
+                      <ChevronDown size={12} />
                     </button>
                   </div>
-                )}
+                  {!root.system && (
+                    <div className="flex gap-0.5 ml-1">
+                      <button className="btn-ghost !p-1" onClick={() => setEditing(root)}>
+                        <Pencil size={13} />
+                      </button>
+                      <button className="btn-ghost !p-1 text-red-500" onClick={() => setDeleting(root)}>
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
               {children.length > 0 && (
                 <ul className="ml-4 border-l border-slate-200 pl-2">
-                  {children.map((child) => {
+                  {children.map((child, childIndex) => {
                     const effectiveNature = getEffectiveCategoryNature(child.id, categories);
                     return (
                       <li key={child.id} className="flex items-center justify-between gap-2 px-2 py-1 rounded-lg hover:bg-slate-50">
@@ -247,13 +268,33 @@ function CategoryColumn({ kind, title }: { kind: CategoryKind; title: string }) 
                           <span className="truncate">{child.name}</span>
                           {effectiveNature && <NatureBadge nature={effectiveNature} inherited={!child.nature} />}
                         </span>
-                        <div className="flex gap-1">
-                          <button className="btn-ghost !p-1" onClick={() => setEditing(child)}>
-                            <Pencil size={13} />
-                          </button>
-                          <button className="btn-ghost !p-1 text-red-500" onClick={() => setDeleting(child)}>
-                            <Trash2 size={13} />
-                          </button>
+                        <div className="flex items-center shrink-0">
+                          <div className="flex flex-col">
+                            <button
+                              className="btn-ghost !p-0 !h-4 !w-5 flex items-center justify-center disabled:opacity-25 disabled:pointer-events-none"
+                              onClick={() => moveCategory(child.id, 'up')}
+                              disabled={childIndex === 0}
+                              title="Sposta su"
+                            >
+                              <ChevronUp size={12} />
+                            </button>
+                            <button
+                              className="btn-ghost !p-0 !h-4 !w-5 flex items-center justify-center disabled:opacity-25 disabled:pointer-events-none"
+                              onClick={() => moveCategory(child.id, 'down')}
+                              disabled={childIndex === children.length - 1}
+                              title="Sposta giù"
+                            >
+                              <ChevronDown size={12} />
+                            </button>
+                          </div>
+                          <div className="flex gap-0.5 ml-1">
+                            <button className="btn-ghost !p-1" onClick={() => setEditing(child)}>
+                              <Pencil size={13} />
+                            </button>
+                            <button className="btn-ghost !p-1 text-red-500" onClick={() => setDeleting(child)}>
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
                         </div>
                       </li>
                     );
