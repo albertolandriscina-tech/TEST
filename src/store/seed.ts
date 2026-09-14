@@ -47,3 +47,4 @@ export function buildDefaultCategories(): Category[] {
 
 export const SYSTEM_CATEGORY_INVESTMENT_BUY = 'Acquisti investimenti';
 export const SYSTEM_CATEGORY_INVESTMENT_SELL = 'Vendite investimenti';
+export const SYSTEM_CATEGORY_INVESTMENT_FEES = 'Commissioni di investimento';

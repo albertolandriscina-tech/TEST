@@ -11,7 +11,12 @@ import type {
   Transaction,
 } from '../types';
 import { newId } from '../utils/id';
-import { buildDefaultCategories, SYSTEM_CATEGORY_INVESTMENT_BUY, SYSTEM_CATEGORY_INVESTMENT_SELL } from './seed';
+import {
+  buildDefaultCategories,
+  SYSTEM_CATEGORY_INVESTMENT_BUY,
+  SYSTEM_CATEGORY_INVESTMENT_SELL,
+  SYSTEM_CATEGORY_INVESTMENT_FEES,
+} from './seed';
 import { computeAllHoldings, round2 } from '../utils/ledger';
 
 function iso(d: Date): string {
@@ -51,7 +56,16 @@ export function buildDemoDataset(): DemoDataset {
     icon: 'trendingdown',
     color: '#14b8a6',
   };
-  categories.push(buyCategory, sellCategory);
+  const feesCategory: Category = {
+    id: newId(),
+    name: SYSTEM_CATEGORY_INVESTMENT_FEES,
+    kind: 'expense',
+    parentId: null,
+    system: true,
+    icon: 'creditcard',
+    color: '#f97316',
+  };
+  categories.push(buyCategory, sellCategory, feesCategory);
 
   const cat = (name: string) => categories.find((c) => c.name === name)!.id;
   const now = new Date();
@@ -139,12 +153,23 @@ export function buildDemoDataset(): DemoDataset {
     tx({
       date: d,
       description: `Acquisto ${investment.name}`,
-      amount: quantity * price + fees,
+      amount: quantity * price,
       type: 'expense',
       accountId: contoTitoli.id,
       categoryId: buyCategory.id,
       investmentTxId: opId,
     });
+    if (fees > 0) {
+      tx({
+        date: d,
+        description: `Commissioni acquisto ${investment.name}`,
+        amount: fees,
+        type: 'expense',
+        accountId: contoTitoli.id,
+        categoryId: feesCategory.id,
+        investmentTxId: opId,
+      });
+    }
   };
 
   buyOperation(9, etf, 5, 88, 2, 500);

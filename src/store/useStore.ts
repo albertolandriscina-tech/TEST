@@ -15,7 +15,12 @@ import type {
 } from '../types';
 import { DEFAULT_SETTINGS } from '../types';
 import { newId, todayISO } from '../utils/id';
-import { buildDefaultCategories, SYSTEM_CATEGORY_INVESTMENT_BUY, SYSTEM_CATEGORY_INVESTMENT_SELL } from './seed';
+import {
+  buildDefaultCategories,
+  SYSTEM_CATEGORY_INVESTMENT_BUY,
+  SYSTEM_CATEGORY_INVESTMENT_SELL,
+  SYSTEM_CATEGORY_INVESTMENT_FEES,
+} from './seed';
 import { buildDemoDataset } from './demoData';
 import { buildDefaultLayout } from '../dashboardWidgets';
 import { computeDueOccurrences, generateTransactionsForRule } from '../utils/recurring';
@@ -92,7 +97,7 @@ interface State {
   deleteRecurring: (id: string) => void;
   generateDueRecurring: () => number;
 
-  ensureSystemCategories: () => { buyId: string; sellId: string };
+  ensureSystemCategories: () => { buyId: string; sellId: string; feesId: string };
   resetAllData: () => void;
   loadDemoData: () => void;
 
@@ -246,6 +251,7 @@ export const useStore = create<State>()(
         const s = get();
         let buy = s.categories.find((c) => c.system && c.name === SYSTEM_CATEGORY_INVESTMENT_BUY);
         let sell = s.categories.find((c) => c.system && c.name === SYSTEM_CATEGORY_INVESTMENT_SELL);
+        let fees = s.categories.find((c) => c.system && c.name === SYSTEM_CATEGORY_INVESTMENT_FEES);
         const toAdd: Category[] = [];
         if (!buy) {
           buy = {
@@ -271,24 +277,36 @@ export const useStore = create<State>()(
           };
           toAdd.push(sell);
         }
+        if (!fees) {
+          fees = {
+            id: newId(),
+            name: SYSTEM_CATEGORY_INVESTMENT_FEES,
+            kind: 'expense',
+            parentId: null,
+            system: true,
+            icon: 'creditcard',
+            color: '#f97316',
+          };
+          toAdd.push(fees);
+        }
         if (toAdd.length) {
           set((st) => ({ categories: [...st.categories, ...toAdd] }));
         }
-        return { buyId: buy.id, sellId: sell.id };
+        return { buyId: buy.id, sellId: sell.id, feesId: fees.id };
       },
 
       addInvestmentTransaction: (op) => {
-        const { buyId, sellId } = get().ensureSystemCategories();
+        const { buyId, sellId, feesId } = get().ensureSystemCategories();
         const id = newId();
         const investment = get().investments.find((i) => i.id === op.investmentId);
-        const total =
-          op.type === 'buy' ? op.quantity * op.price + op.fees : op.quantity * op.price - op.fees;
+        const gross = op.quantity * op.price;
+        const label = op.type === 'buy' ? 'Acquisto' : 'Vendita';
 
         const linkedTx: Transaction = {
           id: newId(),
           date: op.date,
-          description: `${op.type === 'buy' ? 'Acquisto' : 'Vendita'} ${investment?.name ?? ''}`.trim(),
-          amount: Math.max(total, 0),
+          description: `${label} ${investment?.name ?? ''}`.trim(),
+          amount: gross,
           type: op.type === 'buy' ? 'expense' : 'income',
           accountId: op.cashAccountId,
           categoryId: op.type === 'buy' ? buyId : sellId,
@@ -297,9 +315,25 @@ export const useStore = create<State>()(
           createdAt: new Date().toISOString(),
         };
 
+        const newTransactions: Transaction[] = [linkedTx];
+        if (op.fees > 0) {
+          newTransactions.push({
+            id: newId(),
+            date: op.date,
+            description: `Commissioni ${label.toLowerCase()} ${investment?.name ?? ''}`.trim(),
+            amount: op.fees,
+            type: 'expense',
+            accountId: op.cashAccountId,
+            categoryId: feesId,
+            toAccountId: null,
+            investmentTxId: id,
+            createdAt: new Date().toISOString(),
+          });
+        }
+
         set((s) => ({
           investmentTransactions: [...s.investmentTransactions, { ...op, id, createdAt: new Date().toISOString() }],
-          transactions: [...s.transactions, linkedTx],
+          transactions: [...s.transactions, ...newTransactions],
         }));
       },
       deleteInvestmentTransaction: (id) =>
