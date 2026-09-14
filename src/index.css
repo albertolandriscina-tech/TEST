@@ -99,6 +99,15 @@ html.dark {
   color-scheme: dark;
 }
 
+/* Su smartphone (sotto la soglia "sm" di Tailwind, 640px) il testo di base è
+ * aumentato del 5%: essendo tutte le utility di Tailwind basate su rem, la
+ * dimensione di ogni testo dell'app scala proporzionalmente di conseguenza. */
+@media (max-width: 639px) {
+  html {
+    font-size: 105%;
+  }
+}
+
 body {
   @apply bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100;
 }
