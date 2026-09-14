@@ -15,6 +15,7 @@ export function AccountForm({ initial, onSave, onClose }: AccountFormProps) {
   const [type, setType] = useState<AccountType>(initial?.type ?? 'bank');
   const [initialBalance, setInitialBalance] = useState(String(initial?.initialBalance ?? 0));
   const [initialBalanceDate, setInitialBalanceDate] = useState(initial?.initialBalanceDate ?? todayISO());
+  const [creditLimit, setCreditLimit] = useState(initial?.creditLimit != null ? String(initial.creditLimit) : '');
   const [currency, setCurrency] = useState(initial?.currency ?? 'EUR');
   const [note, setNote] = useState(initial?.note ?? '');
 
@@ -25,6 +26,7 @@ export function AccountForm({ initial, onSave, onClose }: AccountFormProps) {
       type,
       initialBalance: Number(initialBalance) || 0,
       initialBalanceDate: initialBalanceDate || undefined,
+      creditLimit: type === 'credit_card' && creditLimit !== '' ? Number(creditLimit) || 0 : undefined,
       currency,
       note: note.trim() || undefined,
       archived: initial?.archived ?? false,
@@ -75,6 +77,20 @@ export function AccountForm({ initial, onSave, onClose }: AccountFormProps) {
           I movimenti inseriti con data precedente a questa non verranno sommati al saldo, per evitare di
           conteggiarli due volte.
         </p>
+        {type === 'credit_card' && (
+          <div>
+            <label className="label">Limite di credito concesso</label>
+            <input
+              className="input"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="Es. 3000"
+              value={creditLimit}
+              onChange={(e) => setCreditLimit(e.target.value)}
+            />
+          </div>
+        )}
         <div>
           <label className="label">Valuta</label>
           <input className="input" value={currency} onChange={(e) => setCurrency(e.target.value)} />

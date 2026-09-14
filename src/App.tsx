@@ -14,6 +14,9 @@ import { applyAppearance } from './utils/theme';
 // avvio, soprattutto per chi apre solo la Dashboard e non usa mai le altre sezioni).
 const Dashboard = lazy(() => import('./components/Dashboard/Dashboard').then((m) => ({ default: m.Dashboard })));
 const AccountsPage = lazy(() => import('./components/Accounts/AccountsPage').then((m) => ({ default: m.AccountsPage })));
+const AccountDetailPage = lazy(() =>
+  import('./components/Accounts/AccountDetailPage').then((m) => ({ default: m.AccountDetailPage }))
+);
 const TransactionsPage = lazy(() =>
   import('./components/Transactions/TransactionsPage').then((m) => ({ default: m.TransactionsPage }))
 );
@@ -135,6 +138,7 @@ export default function App() {
                 <Route path="/movimenti" element={<TransactionsPage />} />
                 <Route path="/analisi" element={<AnalysisPage />} />
                 <Route path="/conti" element={<AccountsPage />} />
+                <Route path="/conti/:id" element={<AccountDetailPage />} />
                 <Route path="/categorie" element={<CategoriesPage />} />
                 <Route path="/budget" element={<BudgetsPage />} />
                 <Route path="/investimenti" element={<InvestmentsPage />} />

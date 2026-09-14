@@ -34,6 +34,8 @@ export interface Account {
    * a questa data non vengono sommati al saldo, per evitare doppi conteggi. Se assente,
    * il saldo iniziale vale "da sempre" (comportamento storico). */
   initialBalanceDate?: string;
+  /** Solo per conti di tipo "credit_card": limite di credito concesso dalla banca. */
+  creditLimit?: number;
   currency: string;
   note?: string;
   archived?: boolean;

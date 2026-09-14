@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Archive, ArchiveRestore, Plus, Trash2, Pencil } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { ACCOUNT_TYPE_LABELS, LIABILITY_ACCOUNT_TYPES } from '../../types';
@@ -9,6 +10,7 @@ import { AccountForm } from './AccountForm';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 
 export function AccountsPage() {
+  const navigate = useNavigate();
   const accounts = useStore((s) => s.accounts);
   const transactions = useStore((s) => s.transactions);
   const addAccount = useStore((s) => s.addAccount);
@@ -60,12 +62,19 @@ export function AccountsPage() {
         {visibleAccounts.map((acc) => {
           const bal = balances[acc.id] ?? 0;
           return (
-            <div key={acc.id} className={`card flex items-center justify-between gap-3 ${acc.archived ? 'opacity-50' : ''}`}>
+            <div
+              key={acc.id}
+              className={`card flex items-center justify-between gap-3 cursor-pointer hover:border-primary-200 ${acc.archived ? 'opacity-50' : ''}`}
+              onClick={() => navigate(`/conti/${acc.id}`)}
+            >
               <div className="min-w-0">
                 <div className="font-medium text-slate-700 truncate">{acc.name}</div>
                 <div className="text-xs text-slate-400 truncate">
                   {ACCOUNT_TYPE_LABELS[acc.type]} · {acc.currency}
                   {acc.initialBalanceDate && <> · saldo iniziale dal {formatDate(acc.initialBalanceDate)}</>}
+                  {acc.type === 'credit_card' && acc.creditLimit != null && (
+                    <> · limite {formatCurrency(acc.creditLimit, acc.currency)}</>
+                  )}
                 </div>
                 <div
                   className={`text-base font-semibold mt-1 ${
@@ -75,7 +84,7 @@ export function AccountsPage() {
                   {formatCurrency(bal, acc.currency)}
                 </div>
               </div>
-              <div className="flex flex-col gap-1 shrink-0">
+              <div className="flex flex-col gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
                 <button className="btn-ghost !p-1.5" title="Modifica" onClick={() => setEditing(acc)}>
                   <Pencil size={15} />
                 </button>
@@ -110,12 +119,19 @@ export function AccountsPage() {
           <tbody>
             {visibleAccounts.map((acc) => {
               const bal = balances[acc.id] ?? 0;
+              const titleParts = [
+                acc.initialBalanceDate ? `Saldo iniziale dal ${formatDate(acc.initialBalanceDate)}` : null,
+                acc.type === 'credit_card' && acc.creditLimit != null
+                  ? `Limite di credito ${formatCurrency(acc.creditLimit, acc.currency)}`
+                  : null,
+              ].filter(Boolean);
               return (
-                <tr key={acc.id} className={acc.archived ? 'opacity-50' : ''}>
-                  <td
-                    className="font-medium text-slate-700"
-                    title={acc.initialBalanceDate ? `Saldo iniziale dal ${formatDate(acc.initialBalanceDate)}` : undefined}
-                  >
+                <tr
+                  key={acc.id}
+                  className={`cursor-pointer hover:bg-slate-50 ${acc.archived ? 'opacity-50' : ''}`}
+                  onClick={() => navigate(`/conti/${acc.id}`)}
+                >
+                  <td className="font-medium text-slate-700" title={titleParts.join(' · ') || undefined}>
                     {acc.name}
                   </td>
                   <td>{ACCOUNT_TYPE_LABELS[acc.type]}</td>
@@ -128,7 +144,7 @@ export function AccountsPage() {
                     {formatCurrency(bal, acc.currency)}
                   </td>
                   <td>
-                    <div className="flex justify-end gap-1">
+                    <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                       <button className="btn-ghost !p-1.5" title="Modifica" onClick={() => setEditing(acc)}>
                         <Pencil size={15} />
                       </button>

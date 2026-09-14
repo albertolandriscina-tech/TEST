@@ -451,3 +451,29 @@ export function buildBalanceForecast(
 
   return { points, projectedIncome, projectedExpense };
 }
+
+export interface AccountBalancePoint {
+  key: string;
+  label: string;
+  balance: number;
+}
+
+/** Andamento del saldo di un singolo conto negli ultimi `count` mesi, ricostruito dai movimenti storici. */
+export function buildAccountBalanceTrend(
+  account: Account,
+  transactions: Transaction[],
+  count: number,
+  anchor = new Date()
+): AccountBalancePoint[] {
+  const points: AccountBalancePoint[] = [];
+  for (let i = count - 1; i >= 0; i--) {
+    const m = subMonths(anchor, i);
+    const cutoffISO = format(endOfMonth(m), 'yyyy-MM-dd');
+    points.push({
+      key: format(m, 'yyyy-MM'),
+      label: `${MONTH_NAMES_SHORT_IT[m.getMonth()]} '${format(m, 'yy')}`,
+      balance: round2(computeAccountBalance(account, transactions, cutoffISO)),
+    });
+  }
+  return points;
+}
