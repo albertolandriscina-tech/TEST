@@ -16,7 +16,7 @@ export interface WidgetDefinition {
 export const WIDGET_DEFINITIONS: Record<DashboardWidgetType, WidgetDefinition> = {
   kpi: {
     type: 'kpi',
-    title: 'Riepilogo del mese',
+    title: 'Riepilogo del periodo',
     defaultLayout: { x: 0, y: 0, w: 12, h: 4, minW: 3, minH: 2 },
     mobileExtraRows: 3,
   },
@@ -48,7 +48,7 @@ export const WIDGET_DEFINITIONS: Record<DashboardWidgetType, WidgetDefinition> =
   },
   'category-breakdown': {
     type: 'category-breakdown',
-    title: 'Spese per categoria (mese)',
+    title: 'Spese per categoria',
     defaultLayout: { x: 0, y: 27, w: 6, h: 9, minW: 3, minH: 5 },
   },
   'recent-transactions': {
@@ -58,7 +58,7 @@ export const WIDGET_DEFINITIONS: Record<DashboardWidgetType, WidgetDefinition> =
   },
   'expense-nature': {
     type: 'expense-nature',
-    title: 'Spese per natura (mese)',
+    title: 'Spese per natura',
     defaultLayout: { x: 0, y: 36, w: 5, h: 9, minW: 3, minH: 5 },
   },
 };

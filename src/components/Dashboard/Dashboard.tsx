@@ -3,6 +3,9 @@ import { LayoutGrid, Plus, RotateCcw, Check } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import type { DashboardWidgetType } from '../../types';
 import { WIDGET_DEFINITIONS, DEFAULT_WIDGET_ORDER } from '../../dashboardWidgets';
+import { defaultDashboardPeriod, type DashboardPeriod } from '../../utils/period';
+import { DashboardPeriodContext } from './DashboardPeriodContext';
+import { PeriodSelector } from './PeriodSelector';
 import { DashboardGrid } from './DashboardGrid';
 import { WidgetCard } from './WidgetCard';
 import { KpiWidget } from './widgets/KpiWidget';
@@ -37,6 +40,7 @@ export function Dashboard() {
 
   const [editMode, setEditMode] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState(false);
+  const [period, setPeriod] = useState<DashboardPeriod>(defaultDashboardPeriod);
 
   const visibleLayout = layout.filter((l) => !hidden.includes(l.i as DashboardWidgetType));
   const hiddenTypes = DEFAULT_WIDGET_ORDER.filter((t) => hidden.includes(t) || !layout.some((l) => l.i === t));
@@ -46,7 +50,7 @@ export function Dashboard() {
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-slate-800">Dashboard</h1>
-          <p className="text-sm text-slate-500">Andamento mensile di entrate, uscite e patrimonio complessivo.</p>
+          <p className="text-sm text-slate-500">Andamento di entrate, uscite e patrimonio nel periodo selezionato.</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {editMode && (
@@ -88,6 +92,8 @@ export function Dashboard() {
         </div>
       </div>
 
+      <PeriodSelector period={period} onChange={setPeriod} />
+
       {editMode && (
         <div className="card !py-2 bg-primary-50 border-primary-200 text-sm text-primary-700">
           Trascina i widget dall'icona <span className="inline-block align-middle">⠿</span> per riordinarli, ridimensionali
@@ -95,20 +101,22 @@ export function Dashboard() {
         </div>
       )}
 
-      <DashboardGrid
-        layout={visibleLayout}
-        editMode={editMode}
-        onLayoutChange={setDashboardLayout}
-        renderWidget={(id) => {
-          const type = id as DashboardWidgetType;
-          const Content = WIDGET_CONTENT[type];
-          return (
-            <WidgetCard title={WIDGET_DEFINITIONS[type].title} editMode={editMode} onRemove={() => hideDashboardWidget(type)}>
-              <Content />
-            </WidgetCard>
-          );
-        }}
-      />
+      <DashboardPeriodContext.Provider value={period}>
+        <DashboardGrid
+          layout={visibleLayout}
+          editMode={editMode}
+          onLayoutChange={setDashboardLayout}
+          renderWidget={(id) => {
+            const type = id as DashboardWidgetType;
+            const Content = WIDGET_CONTENT[type];
+            return (
+              <WidgetCard title={WIDGET_DEFINITIONS[type].title} editMode={editMode} onRemove={() => hideDashboardWidget(type)}>
+                <Content />
+              </WidgetCard>
+            );
+          }}
+        />
+      </DashboardPeriodContext.Provider>
     </div>
   );
 }

@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
-import { endOfMonth, format, startOfMonth } from 'date-fns';
 import { useStore } from '../../../store/useStore';
 import { buildNatureBreakdown, type NatureBreakdownItem } from '../../../utils/analytics';
 import { EXPENSE_NATURE_COLORS, EXPENSE_NATURE_LABELS } from '../../../types';
 import { formatCurrency, formatNumber } from '../../../utils/format';
+import { dashboardPeriodLabel, toISODate } from '../../../utils/period';
+import { useDashboardPeriod } from '../DashboardPeriodContext';
 
 const NATURE_LABELS: Record<NatureBreakdownItem['nature'], string> = {
   ...EXPENSE_NATURE_LABELS,
@@ -17,22 +18,20 @@ const NATURE_COLORS: Record<NatureBreakdownItem['nature'], string> = {
 export function ExpenseNatureWidget() {
   const transactions = useStore((s) => s.transactions);
   const categories = useStore((s) => s.categories);
-
-  const now = new Date();
-  const fromISO = format(startOfMonth(now), 'yyyy-MM-dd');
-  const toISO = format(endOfMonth(now), 'yyyy-MM-dd');
+  const period = useDashboardPeriod();
 
   const breakdown = useMemo(
-    () => buildNatureBreakdown(transactions, categories, fromISO, toISO),
-    [transactions, categories, fromISO, toISO]
+    () => buildNatureBreakdown(transactions, categories, toISODate(period.start), toISODate(period.end)),
+    [transactions, categories, period]
   );
 
   if (breakdown.length === 0) {
-    return <p className="text-sm text-slate-400 text-center py-10">Nessuna spesa registrata questo mese.</p>;
+    return <p className="text-sm text-slate-400 text-center py-10">Nessuna spesa registrata nel periodo.</p>;
   }
 
   return (
     <div className="h-full flex flex-col justify-center gap-3">
+      <p className="text-xs text-slate-400 -mb-1">{dashboardPeriodLabel(period)}</p>
       <div className="h-3 rounded-full overflow-hidden flex bg-slate-100">
         {breakdown.map((item) => (
           <div

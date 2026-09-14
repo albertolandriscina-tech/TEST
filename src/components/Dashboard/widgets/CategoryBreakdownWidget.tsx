@@ -1,16 +1,13 @@
 import { useMemo } from 'react';
-import { endOfMonth, format, startOfMonth, subMonths } from 'date-fns';
 import { ArrowDownRight, ArrowUpRight, Minus } from 'lucide-react';
 import { useStore } from '../../../store/useStore';
 import { buildCategoryBreakdown, pctDelta } from '../../../utils/analytics';
 import { formatCurrency, formatNumber } from '../../../utils/format';
+import { dashboardPeriodLabel, previousDashboardPeriod, toISODate } from '../../../utils/period';
+import { useDashboardPeriod } from '../DashboardPeriodContext';
 import { CategoryIconCircle } from '../../common/CategoryBadge';
 
 const MAX_SLICES = 6;
-
-function monthRange(d: Date) {
-  return { fromISO: format(startOfMonth(d), 'yyyy-MM-dd'), toISO: format(endOfMonth(d), 'yyyy-MM-dd') };
-}
 
 function MiniDelta({ value }: { value: number | null }) {
   const neutral = value === null || Math.abs(value) < 0.5;
@@ -28,19 +25,20 @@ function MiniDelta({ value }: { value: number | null }) {
 export function CategoryBreakdownWidget() {
   const transactions = useStore((s) => s.transactions);
   const categories = useStore((s) => s.categories);
-  const now = new Date();
+  const period = useDashboardPeriod();
 
-  const currentBreakdown = useMemo(() => {
-    const { fromISO, toISO } = monthRange(now);
-    return buildCategoryBreakdown(transactions, categories, 'expense', fromISO, toISO);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transactions, categories]);
+  const currentBreakdown = useMemo(
+    () => buildCategoryBreakdown(transactions, categories, 'expense', toISODate(period.start), toISODate(period.end)),
+    [transactions, categories, period]
+  );
 
   const previousTotal = useMemo(() => {
-    const { fromISO, toISO } = monthRange(subMonths(now, 1));
-    return buildCategoryBreakdown(transactions, categories, 'expense', fromISO, toISO).reduce((s, d) => s + d.amount, 0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transactions, categories]);
+    const prev = previousDashboardPeriod(period);
+    return buildCategoryBreakdown(transactions, categories, 'expense', toISODate(prev.start), toISODate(prev.end)).reduce(
+      (s, d) => s + d.amount,
+      0
+    );
+  }, [transactions, categories, period]);
 
   const { legendItems, otherValue, total } = useMemo(() => {
     const top = currentBreakdown.slice(0, MAX_SLICES);
@@ -55,17 +53,18 @@ export function CategoryBreakdownWidget() {
   const delta = pctDelta(total, previousTotal);
 
   if (currentBreakdown.length === 0) {
-    return <p className="text-sm text-slate-400 text-center py-10">Nessuna spesa registrata questo mese.</p>;
+    return <p className="text-sm text-slate-400 text-center py-10">Nessuna spesa registrata nel periodo.</p>;
   }
 
   return (
     <div className="flex flex-col h-full gap-3">
+      <p className="text-xs text-slate-400">{dashboardPeriodLabel(period)}</p>
       <div className="flex items-center justify-between text-xs text-slate-500">
         <span>
           Tutte le categorie · <span className="font-medium text-slate-700">{formatCurrency(-total)}</span>
         </span>
         <span className="flex items-center gap-1 text-slate-400">
-          vs mese prec. <MiniDelta value={delta} />
+          vs periodo prec. <MiniDelta value={delta} />
         </span>
       </div>
 
