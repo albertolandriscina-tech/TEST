@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, X } from 'lucide-react';
 import type { Category, CategoryKind } from '../../types';
 import { getCategoryPath } from '../../utils/ledger';
 import { CategoryIconCircle } from './CategoryBadge';
@@ -61,39 +61,87 @@ export function CategorySelect({ categories, kind, value, onChange, className }:
       </button>
 
       {open && (
-        <div className="absolute z-20 mt-1 w-full max-h-64 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg py-1">
-          {roots.map((root) => {
-            const children = categories.filter((c) => c.parentId === root.id && !c.archived);
-            return (
-              <div key={root.id}>
-                <button
-                  type="button"
-                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-slate-50 ${
-                    value === root.id ? 'bg-primary-50' : ''
-                  }`}
-                  onClick={() => select(root.id)}
-                >
-                  <CategoryIconCircle category={root} />
-                  <span className="truncate font-medium text-slate-700">{root.name}</span>
-                </button>
-                {children.map((child) => (
+        <>
+          {/* Su smartphone il menu a tendina è scomodo da leggere e toccare: al suo posto
+              un pannello a schermo intero con icone e testo più grandi. Il markup vive
+              comunque dentro containerRef, così il click-outside sopra non lo richiude. */}
+          <div className="sm:hidden fixed inset-0 z-50 flex flex-col bg-white">
+            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 shrink-0">
+              <h2 className="text-base font-semibold text-slate-800">Seleziona categoria</h2>
+              <button type="button" className="btn-ghost !p-1.5" onClick={() => setOpen(false)} aria-label="Chiudi">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-3">
+              {roots.map((root) => {
+                const children = categories.filter((c) => c.parentId === root.id && !c.archived);
+                return (
+                  <div key={root.id} className="mb-1">
+                    <button
+                      type="button"
+                      className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left ${
+                        value === root.id ? 'bg-primary-50' : 'hover:bg-slate-50'
+                      }`}
+                      onClick={() => select(root.id)}
+                    >
+                      <CategoryIconCircle category={root} size="lg" />
+                      <span className="truncate text-base font-medium text-slate-700">{root.name}</span>
+                    </button>
+                    {children.map((child) => (
+                      <button
+                        key={child.id}
+                        type="button"
+                        className={`w-full flex items-center gap-3 pl-11 pr-3 py-2.5 rounded-xl text-left ${
+                          value === child.id ? 'bg-primary-50' : 'hover:bg-slate-50'
+                        }`}
+                        onClick={() => select(child.id)}
+                      >
+                        <CategoryIconCircle category={child} />
+                        <span className="truncate text-base text-slate-600">{child.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                );
+              })}
+              {roots.length === 0 && <p className="px-3 py-2 text-sm text-slate-400">Nessuna categoria disponibile</p>}
+            </div>
+          </div>
+
+          {/* Da tablet in su resta il pannello a tendina compatto. */}
+          <div className="hidden sm:block absolute z-20 mt-1 w-full max-h-64 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg py-1">
+            {roots.map((root) => {
+              const children = categories.filter((c) => c.parentId === root.id && !c.archived);
+              return (
+                <div key={root.id}>
                   <button
-                    key={child.id}
                     type="button"
-                    className={`w-full flex items-center gap-2 pl-8 pr-3 py-1.5 text-sm text-left hover:bg-slate-50 ${
-                      value === child.id ? 'bg-primary-50' : ''
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-slate-50 ${
+                      value === root.id ? 'bg-primary-50' : ''
                     }`}
-                    onClick={() => select(child.id)}
+                    onClick={() => select(root.id)}
                   >
-                    <CategoryIconCircle category={child} size="sm" />
-                    <span className="truncate text-slate-600">{child.name}</span>
+                    <CategoryIconCircle category={root} />
+                    <span className="truncate font-medium text-slate-700">{root.name}</span>
                   </button>
-                ))}
-              </div>
-            );
-          })}
-          {roots.length === 0 && <p className="px-3 py-2 text-sm text-slate-400">Nessuna categoria disponibile</p>}
-        </div>
+                  {children.map((child) => (
+                    <button
+                      key={child.id}
+                      type="button"
+                      className={`w-full flex items-center gap-2 pl-8 pr-3 py-1.5 text-sm text-left hover:bg-slate-50 ${
+                        value === child.id ? 'bg-primary-50' : ''
+                      }`}
+                      onClick={() => select(child.id)}
+                    >
+                      <CategoryIconCircle category={child} size="sm" />
+                      <span className="truncate text-slate-600">{child.name}</span>
+                    </button>
+                  ))}
+                </div>
+              );
+            })}
+            {roots.length === 0 && <p className="px-3 py-2 text-sm text-slate-400">Nessuna categoria disponibile</p>}
+          </div>
+        </>
       )}
     </div>
   );
