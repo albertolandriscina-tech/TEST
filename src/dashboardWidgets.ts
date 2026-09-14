@@ -4,6 +4,13 @@ export interface WidgetDefinition {
   type: DashboardWidgetType;
   title: string;
   defaultLayout: Omit<DashboardWidgetLayout, 'i'>;
+  /**
+   * Righe di altezza aggiuntive quando il widget viene impilato a piena larghezza su
+   * schermi da telefono (vedi DashboardGrid): il contenuto di alcuni widget passa da
+   * una riga di card a due quando lo spazio orizzontale si restringe, e senza questa
+   * altezza extra verrebbe tagliato invece di andare a capo.
+   */
+  mobileExtraRows?: number;
 }
 
 export const WIDGET_DEFINITIONS: Record<DashboardWidgetType, WidgetDefinition> = {
@@ -11,11 +18,13 @@ export const WIDGET_DEFINITIONS: Record<DashboardWidgetType, WidgetDefinition> =
     type: 'kpi',
     title: 'Riepilogo del mese',
     defaultLayout: { x: 0, y: 0, w: 12, h: 4, minW: 3, minH: 2 },
+    mobileExtraRows: 3,
   },
   'networth-breakdown': {
     type: 'networth-breakdown',
     title: 'Composizione del patrimonio',
     defaultLayout: { x: 0, y: 4, w: 12, h: 4, minW: 3, minH: 2 },
+    mobileExtraRows: 3,
   },
   cashflow: {
     type: 'cashflow',
