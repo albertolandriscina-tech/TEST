@@ -1,5 +1,5 @@
 import { addDays, addMonths, addWeeks, addYears, isAfter, parseISO, format } from 'date-fns';
-import type { RecurrenceFrequency, RecurringTransaction, Transaction } from '../types';
+import type { RecurrenceFrequency, RecurringTransaction, Transaction, TransactionType } from '../types';
 import { newId } from './id';
 
 function nextDate(date: Date, freq: RecurrenceFrequency): Date {
@@ -31,6 +31,46 @@ export function computeDueOccurrences(rule: RecurringTransaction, today: Date): 
   while (!isAfter(cursor, today) && guard < 2000) {
     if (end && isAfter(cursor, end)) break;
     occurrences.push(format(cursor, 'yyyy-MM-dd'));
+    cursor = nextDate(cursor, rule.frequency);
+    guard++;
+  }
+  return occurrences;
+}
+
+export interface ProjectedOccurrence {
+  date: string;
+  amount: number;
+  type: TransactionType;
+  accountId: string;
+  toAccountId?: string | null;
+}
+
+/**
+ * Occorrenze future di una regola ricorrente attiva, da `today` (escluso: quelle scadute sono
+ * già movimenti reali, generati da computeDueOccurrences) fino a `horizon` incluso. Usata per
+ * proiettare in avanti l'andamento del saldo tenendo conto di entrate/uscite ricorrenti non
+ * ancora avvenute.
+ */
+export function projectFutureOccurrences(rule: RecurringTransaction, today: Date, horizon: Date): ProjectedOccurrence[] {
+  if (!rule.active) return [];
+  const start = parseISO(rule.startDate);
+  const end = rule.endDate ? parseISO(rule.endDate) : null;
+
+  let cursor = rule.lastGeneratedDate ? nextDate(parseISO(rule.lastGeneratedDate), rule.frequency) : start;
+
+  const occurrences: ProjectedOccurrence[] = [];
+  let guard = 0;
+  while (!isAfter(cursor, horizon) && guard < 5000) {
+    if (end && isAfter(cursor, end)) break;
+    if (isAfter(cursor, today)) {
+      occurrences.push({
+        date: format(cursor, 'yyyy-MM-dd'),
+        amount: rule.amount,
+        type: rule.type,
+        accountId: rule.accountId,
+        toAccountId: rule.toAccountId,
+      });
+    }
     cursor = nextDate(cursor, rule.frequency);
     guard++;
   }

@@ -16,7 +16,7 @@ import { LIABILITY_ACCOUNT_TYPES } from '../types';
  * inserisce sempre un importo positivo e sceglie solo il "tipo" (entrata,
  * uscita, giroconto); il segno applicato al saldo del conto è dedotto qui.
  */
-export function accountDelta(tx: Transaction, accountId: string): number {
+export function accountDelta(tx: Pick<Transaction, 'type' | 'accountId' | 'toAccountId' | 'amount'>, accountId: string): number {
   if (tx.type === 'income') {
     return tx.accountId === accountId ? tx.amount : 0;
   }

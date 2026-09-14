@@ -1,15 +1,18 @@
-import { addDays, endOfMonth, endOfYear, format, isAfter, isBefore, parseISO, startOfMonth, subMonths, subYears } from 'date-fns';
-import type { Account, Category, ExpenseNature, PatrimonioAsset, Transaction } from '../types';
+import { addDays, addMonths, endOfMonth, endOfYear, format, isAfter, isBefore, parseISO, startOfMonth, subMonths, subYears } from 'date-fns';
+import type { Account, Category, ExpenseNature, PatrimonioAsset, RecurringTransaction, Transaction } from '../types';
 import { LIABILITY_ACCOUNT_TYPES, LIQUIDITY_ACCOUNT_TYPES } from '../types';
 import {
+  accountDelta,
   computeAccountBalance,
   getCategoryAndDescendantIds,
   getEffectiveCategoryNature,
   round2,
+  signedBalanceForNetWorth,
   type InvestmentHolding,
 } from './ledger';
 import { MONTH_NAMES_SHORT_IT } from './format';
 import { SYSTEM_CATEGORY_INVESTMENT_BUY, SYSTEM_CATEGORY_INVESTMENT_SELL } from '../store/seed';
+import { projectFutureOccurrences } from './recurring';
 
 /** Variazione percentuale tra due valori; null = "n/d" (nessun confronto significativo, es. da 0). */
 export function pctDelta(current: number, previous: number): number | null {
@@ -384,4 +387,67 @@ export function buildNetWorthTrend(
     });
   }
   return points;
+}
+
+export interface BalanceForecastPoint {
+  key: string;
+  label: string;
+  total: number;
+}
+
+export interface BalanceForecast {
+  points: BalanceForecastPoint[];
+  /** Totale delle entrate/uscite ricorrenti non ancora avvenute, nell'intero orizzonte proiettato. */
+  projectedIncome: number;
+  projectedExpense: number;
+}
+
+/**
+ * Proiezione del saldo complessivo (somma dei conti, con le passività sempre a debito, come in
+ * "Saldo conti") nei prossimi `monthsAhead` mesi, tenendo conto delle entrate/uscite generate
+ * dai movimenti ricorrenti/programmati attivi non ancora avvenuti: quelli già scaduti sono
+ * normali movimenti e contano già nel saldo attuale, quindi qui si proiettano solo le occorrenze
+ * future. Non include l'effetto di investimenti o beni patrimoniali.
+ */
+export function buildBalanceForecast(
+  accounts: Account[],
+  transactions: Transaction[],
+  recurringTransactions: RecurringTransaction[],
+  monthsAhead: number,
+  anchor = new Date()
+): BalanceForecast {
+  const todayISO = format(anchor, 'yyyy-MM-dd');
+  const horizon = endOfMonth(addMonths(anchor, monthsAhead));
+  const projected = recurringTransactions
+    .filter((r) => r.active)
+    .flatMap((r) => projectFutureOccurrences(r, anchor, horizon));
+
+  const projectedIncome = round2(projected.filter((o) => o.type === 'income').reduce((s, o) => s + o.amount, 0));
+  const projectedExpense = round2(projected.filter((o) => o.type === 'expense').reduce((s, o) => s + o.amount, 0));
+
+  // Nessun cutoff per "oggi": coerente con gli altri widget (Saldo conti, Patrimonio netto),
+  // il saldo "attuale" include già eventuali movimenti inseriti con data futura.
+  const totalAsOf = (cutoffISO?: string) =>
+    round2(
+      accounts.reduce((sum, acc) => {
+        const actual = computeAccountBalance(acc, transactions, cutoffISO);
+        const boundISO = cutoffISO ?? todayISO;
+        const projectedDelta = projected
+          .filter((o) => o.date <= boundISO && (o.accountId === acc.id || o.toAccountId === acc.id))
+          .reduce((s, o) => s + accountDelta(o, acc.id), 0);
+        return sum + signedBalanceForNetWorth(acc, actual + projectedDelta);
+      }, 0)
+    );
+
+  const points: BalanceForecastPoint[] = [{ key: 'oggi', label: 'Oggi', total: totalAsOf() }];
+  for (let i = 1; i <= monthsAhead; i++) {
+    const cutoff = endOfMonth(addMonths(anchor, i));
+    points.push({
+      key: format(cutoff, 'yyyy-MM'),
+      label: `${MONTH_NAMES_SHORT_IT[cutoff.getMonth()]} '${format(cutoff, 'yy')}`,
+      total: totalAsOf(format(cutoff, 'yyyy-MM-dd')),
+    });
+  }
+
+  return { points, projectedIncome, projectedExpense };
 }

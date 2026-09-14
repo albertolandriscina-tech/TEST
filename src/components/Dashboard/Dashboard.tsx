@@ -17,6 +17,7 @@ import { AccountsBalanceWidget } from './widgets/AccountsBalanceWidget';
 import { CategoryBreakdownWidget } from './widgets/CategoryBreakdownWidget';
 import { ExpenseNatureWidget } from './widgets/ExpenseNatureWidget';
 import { RecentTransactionsWidget } from './widgets/RecentTransactionsWidget';
+import { BalanceForecastWidget } from './widgets/BalanceForecastWidget';
 
 const WIDGET_CONTENT: Record<DashboardWidgetType, () => JSX.Element> = {
   kpi: KpiWidget,
@@ -28,6 +29,7 @@ const WIDGET_CONTENT: Record<DashboardWidgetType, () => JSX.Element> = {
   'category-breakdown': CategoryBreakdownWidget,
   'expense-nature': ExpenseNatureWidget,
   'recent-transactions': RecentTransactionsWidget,
+  'balance-forecast': BalanceForecastWidget,
 };
 
 export function Dashboard() {

@@ -61,6 +61,12 @@ export const WIDGET_DEFINITIONS: Record<DashboardWidgetType, WidgetDefinition> =
     title: 'Spese per natura',
     defaultLayout: { x: 0, y: 36, w: 5, h: 9, minW: 3, minH: 5 },
   },
+  'balance-forecast': {
+    type: 'balance-forecast',
+    title: 'Tendenza saldo complessivo',
+    defaultLayout: { x: 0, y: 45, w: 12, h: 12, minW: 6, minH: 7 },
+    mobileExtraRows: 3,
+  },
 };
 
 export const DEFAULT_WIDGET_ORDER: DashboardWidgetType[] = [
@@ -73,6 +79,7 @@ export const DEFAULT_WIDGET_ORDER: DashboardWidgetType[] = [
   'category-breakdown',
   'recent-transactions',
   'expense-nature',
+  'balance-forecast',
 ];
 
 export function buildDefaultLayout(): DashboardWidgetLayout[] {
