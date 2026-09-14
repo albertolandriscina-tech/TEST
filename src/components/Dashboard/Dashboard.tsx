@@ -18,6 +18,7 @@ import { CategoryBreakdownWidget } from './widgets/CategoryBreakdownWidget';
 import { ExpenseNatureWidget } from './widgets/ExpenseNatureWidget';
 import { RecentTransactionsWidget } from './widgets/RecentTransactionsWidget';
 import { BalanceForecastWidget } from './widgets/BalanceForecastWidget';
+import { CreditCardUsageWidget } from './widgets/CreditCardUsageWidget';
 
 const WIDGET_CONTENT: Record<DashboardWidgetType, () => JSX.Element> = {
   kpi: KpiWidget,
@@ -30,6 +31,7 @@ const WIDGET_CONTENT: Record<DashboardWidgetType, () => JSX.Element> = {
   'expense-nature': ExpenseNatureWidget,
   'recent-transactions': RecentTransactionsWidget,
   'balance-forecast': BalanceForecastWidget,
+  'credit-usage': CreditCardUsageWidget,
 };
 
 export function Dashboard() {

@@ -67,6 +67,11 @@ export const WIDGET_DEFINITIONS: Record<DashboardWidgetType, WidgetDefinition> =
     defaultLayout: { x: 0, y: 45, w: 12, h: 12, minW: 6, minH: 7 },
     mobileExtraRows: 3,
   },
+  'credit-usage': {
+    type: 'credit-usage',
+    title: 'Utilizzo carte di credito',
+    defaultLayout: { x: 0, y: 57, w: 6, h: 9, minW: 4, minH: 5 },
+  },
 };
 
 export const DEFAULT_WIDGET_ORDER: DashboardWidgetType[] = [
@@ -80,6 +85,7 @@ export const DEFAULT_WIDGET_ORDER: DashboardWidgetType[] = [
   'recent-transactions',
   'expense-nature',
   'balance-forecast',
+  'credit-usage',
 ];
 
 export function buildDefaultLayout(): DashboardWidgetLayout[] {

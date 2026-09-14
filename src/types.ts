@@ -268,7 +268,8 @@ export type DashboardWidgetType =
   | 'category-breakdown'
   | 'expense-nature'
   | 'recent-transactions'
-  | 'balance-forecast';
+  | 'balance-forecast'
+  | 'credit-usage';
 
 export interface DashboardWidgetLayout {
   i: string; // corrisponde a DashboardWidgetType
