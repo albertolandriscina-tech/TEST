@@ -55,6 +55,17 @@ function sanitizeCSVField(value: string): string {
   return /^[=+\-@]/.test(value) ? `'${value}` : value;
 }
 
+/** Etichetta categoria per l'esportazione: il percorso della categoria, oppure l'elenco
+ * "Nome (importo); Nome (importo)" se il movimento è frazionato su più categorie. */
+function categoryLabelForExport(t: Transaction, categories: Category[]): string {
+  if (t.splits && t.splits.length > 0) {
+    return t.splits
+      .map((s) => `${getCategoryPath(s.categoryId, categories).replace(' › ', ' > ')} (${s.amount.toFixed(2)})`)
+      .join('; ');
+  }
+  return getCategoryPath(t.categoryId, categories).replace(' › ', ' > ');
+}
+
 export function transactionsToCSV(transactions: Transaction[], accounts: Account[], categories: Category[]): string {
   const accountName = (id: string) => accounts.find((a) => a.id === id)?.name ?? '';
   const rows: ExportRow[] = transactions.map((t) => ({
@@ -63,7 +74,7 @@ export function transactionsToCSV(transactions: Transaction[], accounts: Account
     Descrizione: sanitizeCSVField(t.description),
     Conto: accountName(t.accountId),
     ContoDestinazione: t.toAccountId ? accountName(t.toAccountId) : '',
-    Categoria: t.type === 'transfer' ? '' : getCategoryPath(t.categoryId, categories).replace(' › ', ' > '),
+    Categoria: t.type === 'transfer' ? '' : categoryLabelForExport(t, categories),
     Importo: t.amount.toFixed(2),
     Note: sanitizeCSVField(t.note ?? ''),
   }));

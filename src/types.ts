@@ -85,6 +85,13 @@ export const TRANSACTION_TYPE_LABELS: Record<TransactionType, string> = {
   transfer: 'Giroconto',
 };
 
+/** Una riga di un movimento frazionato: parte dell'importo totale attribuita a una categoria.
+ * `categoryId` può diventare null se la categoria originale viene poi eliminata. */
+export interface TransactionSplit {
+  categoryId: string | null;
+  amount: number;
+}
+
 export interface Transaction {
   id: string;
   date: string; // ISO yyyy-MM-dd
@@ -92,7 +99,10 @@ export interface Transaction {
   amount: number; // sempre positivo: il segno è dedotto automaticamente dal type
   type: TransactionType;
   accountId: string; // conto principale del movimento
-  categoryId?: string | null; // obbligatorio per income/expense
+  categoryId?: string | null; // obbligatorio per income/expense, salvo quando è frazionato (vedi splits)
+  /** Se presente (income/expense), il movimento è frazionato su più categorie: la somma
+   * degli importi deve corrispondere ad `amount` e `categoryId` non viene usato. */
+  splits?: TransactionSplit[] | null;
   toAccountId?: string | null; // obbligatorio per transfer
   note?: string;
   recurringId?: string | null;

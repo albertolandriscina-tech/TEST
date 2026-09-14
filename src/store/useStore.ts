@@ -157,9 +157,11 @@ export const useStore = create<State>()(
       deleteCategory: (id) =>
         set((s) => ({
           categories: s.categories.filter((c) => c.id !== id && c.parentId !== id),
-          transactions: s.transactions.map((t) =>
-            t.categoryId === id ? { ...t, categoryId: null } : t
-          ),
+          transactions: s.transactions.map((t) => ({
+            ...t,
+            categoryId: t.categoryId === id ? null : t.categoryId,
+            splits: t.splits ? t.splits.map((sp) => (sp.categoryId === id ? { ...sp, categoryId: null } : sp)) : t.splits,
+          })),
           budgets: s.budgets.filter((b) => b.categoryId !== id),
         })),
 

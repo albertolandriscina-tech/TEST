@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { endOfMonth, endOfYear, format, parseISO, startOfMonth, startOfYear, subDays } from 'date-fns';
-import { ArrowDownRight, ArrowUpRight, ChevronDown, ChevronRight } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, ChevronDown, ChevronRight, Split } from 'lucide-react';
 import { Bar, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useStore } from '../../store/useStore';
 import {
@@ -595,7 +595,13 @@ export function AnalysisPage() {
               {topIncome.map((t) => (
                 <li key={t.id} className="flex items-center justify-between gap-2 text-sm">
                   <span className="flex items-center gap-1.5 min-w-0">
-                    <CategoryIconCircle category={categories.find((c) => c.id === t.categoryId)} />
+                    {t.splits && t.splits.length > 0 ? (
+                      <span className="inline-flex items-center justify-center rounded-full bg-slate-100 text-slate-500 shrink-0 w-5 h-5">
+                        <Split size={12} />
+                      </span>
+                    ) : (
+                      <CategoryIconCircle category={categories.find((c) => c.id === t.categoryId)} />
+                    )}
                     <span className="min-w-0">
                       <span className="block text-slate-700 truncate">{t.description || '—'}</span>
                       <span className="block text-xs text-slate-400">{formatDate(t.date)}</span>
@@ -616,7 +622,13 @@ export function AnalysisPage() {
               {topExpense.map((t) => (
                 <li key={t.id} className="flex items-center justify-between gap-2 text-sm">
                   <span className="flex items-center gap-1.5 min-w-0">
-                    <CategoryIconCircle category={categories.find((c) => c.id === t.categoryId)} />
+                    {t.splits && t.splits.length > 0 ? (
+                      <span className="inline-flex items-center justify-center rounded-full bg-slate-100 text-slate-500 shrink-0 w-5 h-5">
+                        <Split size={12} />
+                      </span>
+                    ) : (
+                      <CategoryIconCircle category={categories.find((c) => c.id === t.categoryId)} />
+                    )}
                     <span className="min-w-0">
                       <span className="block text-slate-700 truncate">{t.description || '—'}</span>
                       <span className="block text-xs text-slate-400">{formatDate(t.date)}</span>

@@ -1,23 +1,9 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useStore } from '../../../store/useStore';
-import { getCategoryAndDescendantIds } from '../../../utils/ledger';
+import { computeActualForCategory } from '../../../utils/ledger';
 import { formatCurrency, MONTH_NAMES_IT } from '../../../utils/format';
 import { CategoryIconCircle } from '../../common/CategoryBadge';
-
-function actualForCategory(
-  transactions: ReturnType<typeof useStore.getState>['transactions'],
-  categories: ReturnType<typeof useStore.getState>['categories'],
-  categoryId: string,
-  year: number,
-  month: number
-) {
-  const ids = getCategoryAndDescendantIds(categoryId, categories);
-  return transactions
-    .filter((t) => t.categoryId && ids.includes(t.categoryId))
-    .filter((t) => Number(t.date.slice(0, 4)) === year && Number(t.date.slice(5, 7)) === month)
-    .reduce((s, t) => s + t.amount, 0);
-}
 
 export function BudgetWidget() {
   const categories = useStore((s) => s.categories);
@@ -40,7 +26,7 @@ export function BudgetWidget() {
       expenseRoots
         .map((cat) => {
           const amount = budgets.find((b) => b.categoryId === cat.id && b.year === year && b.month === month)?.amount ?? 0;
-          const actual = actualForCategory(transactions, categories, cat.id, year, month);
+          const actual = computeActualForCategory(transactions, categories, cat.id, year, month);
           return { cat, amount, actual };
         })
         .sort((a, b) => ratioOf(b.amount, b.actual) - ratioOf(a.amount, a.actual)),

@@ -151,7 +151,7 @@ export function AccountDetailPage() {
                       )}
                     </div>
                     {t.type !== 'transfer' && (
-                      <CategoryBadge categoryId={t.categoryId} categories={categories} className="text-xs text-slate-400 mt-0.5" />
+                      <CategoryBadge categoryId={t.categoryId} categories={categories} splits={t.splits} className="text-xs text-slate-400 mt-0.5" />
                     )}
                     <div className="flex items-center justify-between mt-2">
                       <span
@@ -212,7 +212,7 @@ export function AccountDetailPage() {
                               `verso ${otherAccountName(t.toAccountId!)}`
                             )
                           ) : (
-                            <CategoryBadge categoryId={t.categoryId} categories={categories} />
+                            <CategoryBadge categoryId={t.categoryId} categories={categories} splits={t.splits} />
                           )}
                         </td>
                         <td

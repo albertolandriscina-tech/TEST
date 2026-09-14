@@ -1,6 +1,8 @@
-import type { Category } from '../../types';
+import { Split } from 'lucide-react';
+import type { Category, TransactionSplit } from '../../types';
 import { getCategoryColor, getCategoryIconComponent } from '../../utils/categoryStyle';
 import { getCategoryPath } from '../../utils/ledger';
+import { formatCurrency } from '../../utils/format';
 
 interface CategoryIconCircleProps {
   category: Pick<Category, 'id' | 'color' | 'icon'> | null | undefined;
@@ -28,12 +30,33 @@ export function CategoryIconCircle({ category, size = 'sm', className = '' }: Ca
 interface CategoryBadgeProps {
   categoryId?: string | null;
   categories: Category[];
+  /** Se presente (movimento frazionato), mostra un riepilogo "N categorie" al posto di una sola. */
+  splits?: TransactionSplit[] | null;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
   fallbackLabel?: string;
 }
 
-export function CategoryBadge({ categoryId, categories, size = 'sm', className = '', fallbackLabel = '—' }: CategoryBadgeProps) {
+export function CategoryBadge({ categoryId, categories, splits, size = 'sm', className = '', fallbackLabel = '—' }: CategoryBadgeProps) {
+  if (splits && splits.length > 0) {
+    const dim = DIM[size];
+    const iconSize = ICON_SIZE[size];
+    const title = splits
+      .map((s) => `${getCategoryPath(s.categoryId, categories)}: ${formatCurrency(s.amount)}`)
+      .join('\n');
+    return (
+      <span className={`inline-flex items-center gap-1.5 min-w-0 ${className}`} title={title}>
+        <span
+          className="inline-flex items-center justify-center rounded-full shrink-0 bg-slate-100 text-slate-500"
+          style={{ width: dim, height: dim }}
+        >
+          <Split size={iconSize} />
+        </span>
+        <span className="truncate">{splits.length} categorie</span>
+      </span>
+    );
+  }
+
   const category = categoryId ? categories.find((c) => c.id === categoryId) : null;
 
   if (!category) {

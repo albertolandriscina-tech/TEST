@@ -177,7 +177,7 @@ export function TransactionsPage() {
                 {t.type === 'transfer' ? `${accountName(t.accountId)} → ${accountName(t.toAccountId!)}` : accountName(t.accountId)}
               </div>
               {t.type !== 'transfer' && (
-                <CategoryBadge categoryId={t.categoryId} categories={categories} className="text-xs text-slate-400 mt-0.5" />
+                <CategoryBadge categoryId={t.categoryId} categories={categories} splits={t.splits} className="text-xs text-slate-400 mt-0.5" />
               )}
               <div className="flex items-center justify-between mt-2">
                 <span
@@ -239,7 +239,7 @@ export function TransactionsPage() {
                   {t.type === 'transfer' ? `${accountName(t.accountId)} → ${accountName(t.toAccountId!)}` : accountName(t.accountId)}
                 </td>
                 <td className="text-slate-500">
-                  {t.type === 'transfer' ? '—' : <CategoryBadge categoryId={t.categoryId} categories={categories} />}
+                  {t.type === 'transfer' ? '—' : <CategoryBadge categoryId={t.categoryId} categories={categories} splits={t.splits} />}
                 </td>
                 <td
                   className={`text-right font-semibold whitespace-nowrap ${

@@ -69,6 +69,53 @@ export function computeAllAccountBalances(
   return result;
 }
 
+export interface CategoryAmount {
+  categoryId: string | null;
+  amount: number;
+}
+
+/** True se il movimento è frazionato su più categorie. */
+export function isSplitTransaction(t: Pick<Transaction, 'splits'>): boolean {
+  return !!t.splits && t.splits.length > 0;
+}
+
+/**
+ * Scomposizione di un movimento nelle sue righe categoria/importo: le righe di
+ * frazionamento se presenti, altrimenti un'unica riga con la categoria principale.
+ * Centralizza qui la lettura di "che categorie/importi compongono questo movimento",
+ * così budget, analisi e riepiloghi per categoria continuano a funzionare per i
+ * movimenti frazionati senza dover conoscere il dettaglio di `splits`.
+ */
+export function getTransactionCategoryAmounts(t: Pick<Transaction, 'categoryId' | 'amount' | 'splits'>): CategoryAmount[] {
+  if (t.splits && t.splits.length > 0) {
+    return t.splits.map((s) => ({ categoryId: s.categoryId, amount: s.amount }));
+  }
+  return [{ categoryId: t.categoryId ?? null, amount: t.amount }];
+}
+
+/**
+ * Totale attribuito a una categoria (e sue sottocategorie), in un anno ed eventualmente
+ * un mese specifico, sommando anche le righe dei movimenti frazionati che la coinvolgono.
+ */
+export function computeActualForCategory(
+  transactions: Transaction[],
+  categories: Category[],
+  categoryId: string,
+  year: number,
+  month?: number
+): number {
+  const ids = getCategoryAndDescendantIds(categoryId, categories);
+  let total = 0;
+  for (const t of transactions) {
+    if (Number(t.date.slice(0, 4)) !== year) continue;
+    if (month && Number(t.date.slice(5, 7)) !== month) continue;
+    for (const part of getTransactionCategoryAmounts(t)) {
+      if (part.categoryId && ids.includes(part.categoryId)) total += part.amount;
+    }
+  }
+  return total;
+}
+
 /** Restituisce l'id della categoria e di tutti i suoi antenati (per aggregare le sottocategorie). */
 export function getCategoryAndDescendantIds(categoryId: string, categories: Category[]): string[] {
   const ids = [categoryId];

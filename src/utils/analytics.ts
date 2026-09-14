@@ -6,8 +6,10 @@ import {
   computeAccountBalance,
   getCategoryAndDescendantIds,
   getEffectiveCategoryNature,
+  getTransactionCategoryAmounts,
   round2,
   signedBalanceForNetWorth,
+  type CategoryAmount,
   type InvestmentHolding,
 } from './ledger';
 import { MONTH_NAMES_SHORT_IT } from './format';
@@ -121,28 +123,28 @@ export function buildCategoryBreakdown(
   toISO: string
 ): CategoryBreakdownItem[] {
   const categoryById = new Map(categories.map((c) => [c.id, c]));
-  const filtered = transactions.filter(
-    (t) =>
-      t.type === type &&
-      t.date >= fromISO &&
-      t.date <= toISO &&
-      !isInvestmentMovementCategory(t.categoryId ? categoryById.get(t.categoryId) : undefined)
-  );
-  const total = filtered.reduce((s, t) => s + t.amount, 0);
+  const inRange = transactions.filter((t) => t.type === type && t.date >= fromISO && t.date <= toISO);
+
+  // Ogni movimento contribuisce con una riga per categoria (una sola se non frazionato),
+  // così un movimento diviso su più categorie viene contato correttamente in ciascuna.
+  const entries: CategoryAmount[] = [];
+  for (const t of inRange) {
+    for (const part of getTransactionCategoryAmounts(t)) {
+      if (isInvestmentMovementCategory(part.categoryId ? categoryById.get(part.categoryId) : undefined)) continue;
+      entries.push(part);
+    }
+  }
+  const total = entries.reduce((s, e) => s + e.amount, 0);
 
   const roots = categories.filter((c) => c.kind === type && !c.parentId && !c.archived && !isInvestmentMovementCategory(c));
   return roots
     .map((root) => {
       const ids = getCategoryAndDescendantIds(root.id, categories);
-      const amount = filtered
-        .filter((t) => t.categoryId && ids.includes(t.categoryId))
-        .reduce((s, t) => s + t.amount, 0);
+      const amount = entries.filter((e) => e.categoryId && ids.includes(e.categoryId)).reduce((s, e) => s + e.amount, 0);
       const children: CategoryBreakdownChild[] = categories
         .filter((c) => c.parentId === root.id && !c.archived)
         .map((child) => {
-          const childAmount = filtered
-            .filter((t) => t.categoryId === child.id)
-            .reduce((s, t) => s + t.amount, 0);
+          const childAmount = entries.filter((e) => e.categoryId === child.id).reduce((s, e) => s + e.amount, 0);
           return { category: child, amount: childAmount, pct: total > 0 ? (childAmount / total) * 100 : 0 };
         })
         .filter((c) => c.amount > 0)
@@ -310,24 +312,22 @@ export function buildNatureBreakdown(
   toISO: string
 ): NatureBreakdownItem[] {
   const categoryById = new Map(categories.map((c) => [c.id, c]));
-  const filtered = transactions.filter(
-    (t) =>
-      t.type === 'expense' &&
-      t.date >= fromISO &&
-      t.date <= toISO &&
-      !isInvestmentMovementCategory(t.categoryId ? categoryById.get(t.categoryId) : undefined)
-  );
+  const inRange = transactions.filter((t) => t.type === 'expense' && t.date >= fromISO && t.date <= toISO);
   const totals: Record<ExpenseNature | 'non_classificata', number> = {
     obbligatoria: 0,
     necessaria: 0,
     extra: 0,
     non_classificata: 0,
   };
-  for (const t of filtered) {
-    const nature = getEffectiveCategoryNature(t.categoryId, categories) ?? 'non_classificata';
-    totals[nature] += t.amount;
+  let total = 0;
+  for (const t of inRange) {
+    for (const part of getTransactionCategoryAmounts(t)) {
+      if (isInvestmentMovementCategory(part.categoryId ? categoryById.get(part.categoryId) : undefined)) continue;
+      const nature = getEffectiveCategoryNature(part.categoryId, categories) ?? 'non_classificata';
+      totals[nature] += part.amount;
+      total += part.amount;
+    }
   }
-  const total = filtered.reduce((s, t) => s + t.amount, 0);
   return NATURE_ORDER.map((nature) => ({
     nature,
     amount: round2(totals[nature]),

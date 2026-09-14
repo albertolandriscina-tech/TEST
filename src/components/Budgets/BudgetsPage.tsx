@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useStore } from '../../store/useStore';
 import type { CategoryKind } from '../../types';
 import { formatCurrency, MONTH_NAMES_IT, MONTH_NAMES_SHORT_IT } from '../../utils/format';
-import { getCategoryAndDescendantIds } from '../../utils/ledger';
+import { computeActualForCategory as actualForCategory } from '../../utils/ledger';
 import { CategoryIconCircle } from '../common/CategoryBadge';
 
 function useYears() {
@@ -16,21 +16,6 @@ function useYears() {
     budgets.forEach((b) => years.add(b.year));
     return Array.from(years).sort((a, b) => b - a);
   }, [transactions, budgets]);
-}
-
-function actualForCategory(
-  transactions: ReturnType<typeof useStore.getState>['transactions'],
-  categories: ReturnType<typeof useStore.getState>['categories'],
-  categoryId: string,
-  year: number,
-  month?: number
-) {
-  const ids = getCategoryAndDescendantIds(categoryId, categories);
-  return transactions
-    .filter((t) => t.categoryId && ids.includes(t.categoryId))
-    .filter((t) => Number(t.date.slice(0, 4)) === year)
-    .filter((t) => (month ? Number(t.date.slice(5, 7)) === month : true))
-    .reduce((s, t) => s + t.amount, 0);
 }
 
 /** Testi ed etichette specifici per un budget di uscita ("quanto posso spendere") o una
