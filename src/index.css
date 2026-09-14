@@ -101,10 +101,23 @@ html.dark {
 
 /* Su smartphone (sotto la soglia "sm" di Tailwind, 640px) il testo di base è
  * aumentato del 5%: essendo tutte le utility di Tailwind basate su rem, la
- * dimensione di ogni testo dell'app scala proporzionalmente di conseguenza. */
+ * dimensione di ogni testo dell'app scala proporzionalmente di conseguenza. Per
+ * lo stesso motivo scalano già anche padding, margini, dimensioni di card/
+ * pulsanti/input e raggi degli angoli (anch'essi in rem in Tailwind). */
 @media (max-width: 639px) {
   html {
     font-size: 105%;
+  }
+
+  /* Le icone (lucide-react) hanno invece una dimensione fissa in pixel passata
+   * via prop "size" e non seguono il font-size della pagina: senza questa
+   * regola resterebbero della stessa dimensione mentre tutto il resto cresce,
+   * apparendo relativamente più piccole. Il transform (anziché width/height)
+   * non altera lo spazio occupato nel layout, quindi non introduce overflow
+   * né richiede toccare le decine di punti dell'app che impostano "size". I
+   * grafici (Recharts) non usano la classe "lucide" e restano quindi esclusi. */
+  svg.lucide {
+    transform: scale(1.05);
   }
 }
 
