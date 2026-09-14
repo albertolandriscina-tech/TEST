@@ -86,6 +86,19 @@ html, body, #root {
   height: 100%;
 }
 
+/*
+ * Senza questa dichiarazione i controlli nativi del browser (il popup dei <select>,
+ * il calendario di <input type="date">) ignorano il tema chiaro/scuro scelto in app e
+ * seguono invece la preferenza del sistema operativo: risultavano scuri anche a tema
+ * chiaro quando il sistema operativo era impostato su dark mode.
+ */
+:root {
+  color-scheme: light;
+}
+html.dark {
+  color-scheme: dark;
+}
+
 body {
   @apply bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100;
 }
