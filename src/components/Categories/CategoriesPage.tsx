@@ -16,6 +16,13 @@ import {
   getCategoryIconKey,
 } from '../../utils/categoryStyle';
 
+// Da tablet/desktop in su (soglia "md", la stessa a cui questa pagina passa a due
+// colonne) le icone dell'elenco sono più grandi: a dimensione compatta (quella usata
+// anche su smartphone, dove lo spazio è poco) il disegno dell'icona si distingue con
+// difficoltà. Il "!" (important di Tailwind) è necessario per vincere la dimensione
+// inline impostata da CategoryIconCircle in base alla sua prop "size".
+const DESKTOP_ICON_SIZE = 'md:!w-9 md:!h-9 md:[&>svg]:!w-[22px] md:[&>svg]:!h-[22px]';
+
 function NatureBadge({ nature, inherited = false }: { nature: ExpenseNature; inherited?: boolean }) {
   return (
     <span
@@ -220,7 +227,7 @@ function CategoryColumn({ kind, title }: { kind: CategoryKind; title: string }) 
             <li key={root.id}>
               <div className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50">
                 <span className="flex items-center gap-2 text-sm font-medium text-slate-700 truncate min-w-0">
-                  <CategoryIconCircle category={root} />
+                  <CategoryIconCircle category={root} className={DESKTOP_ICON_SIZE} />
                   <span className="truncate">{root.name}</span>
                   {root.system && <span className="badge bg-slate-100 text-slate-500 shrink-0">sistema</span>}
                   {root.nature && <NatureBadge nature={root.nature} />}
@@ -264,7 +271,7 @@ function CategoryColumn({ kind, title }: { kind: CategoryKind; title: string }) 
                       <li key={child.id} className="flex items-center justify-between gap-2 px-2 py-1 rounded-lg hover:bg-slate-50">
                         <span className="text-sm text-slate-600 flex items-center gap-1.5 min-w-0">
                           <CornerDownRight size={12} className="text-slate-300 shrink-0" />
-                          <CategoryIconCircle category={child} />
+                          <CategoryIconCircle category={child} className={DESKTOP_ICON_SIZE} />
                           <span className="truncate">{child.name}</span>
                           {effectiveNature && <NatureBadge nature={effectiveNature} inherited={!child.nature} />}
                         </span>
