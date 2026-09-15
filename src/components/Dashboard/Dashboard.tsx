@@ -43,6 +43,7 @@ export function Dashboard() {
   const resetDashboardLayout = useStore((s) => s.resetDashboardLayout);
 
   const [editMode, setEditMode] = useState(false);
+  const [isStackedLayout, setIsStackedLayout] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [period, setPeriod] = useState<DashboardPeriod>(defaultDashboardPeriod);
 
@@ -100,8 +101,12 @@ export function Dashboard() {
 
       {editMode && (
         <div className="card !py-2 bg-primary-50 border-primary-200 text-sm text-primary-700">
-          Trascina i widget dall'icona <span className="inline-block align-middle">⠿</span> per riordinarli, ridimensionali
-          dall'angolo in basso a destra, o rimuovili con la ×.
+          Trascina i widget dall'icona <span className="inline-block align-middle">⠿</span> per riordinarli
+          {/* Sotto i 768px di contenitore (non di finestra: la sidebar è fissa e non
+              conta) i widget occupano sempre tutta la larghezza e il ridimensionamento
+              manuale è disattivato in DashboardGrid: l'istruzione non deve quindi
+              comparire, per non promettere un'azione impossibile. */}
+          {!isStackedLayout && ", ridimensionali dall'angolo in basso a destra,"} o rimuovili con la ×.
         </div>
       )}
 
@@ -110,6 +115,7 @@ export function Dashboard() {
           layout={visibleLayout}
           editMode={editMode}
           onLayoutChange={setDashboardLayout}
+          onStackedChange={setIsStackedLayout}
           renderWidget={(id) => {
             const type = id as DashboardWidgetType;
             const Content = WIDGET_CONTENT[type];
