@@ -119,6 +119,19 @@ html.dark {
   svg.lucide {
     transform: scale(1.05);
   }
+
+  /* I grafici (Recharts) impostano la dimensione del testo di assi e legenda via
+   * prop ("tick"/"wrapperStyle"), non seguono quindi le regole precedenti: su
+   * smartphone i valori sugli assi e le etichette della legenda vengono
+   * ingranditi leggermente per restare leggibili nei widget della dashboard,
+   * la cui altezza a piena larghezza è comunque già stata aumentata (vedi
+   * mobileExtraRows in dashboardWidgets.ts). L'!important è necessario perché
+   * questi elementi ricevono la dimensione via attributo/stile inline. */
+  .recharts-text,
+  .recharts-cartesian-axis-tick-value,
+  .recharts-legend-wrapper {
+    font-size: 12px !important;
+  }
 }
 
 body {

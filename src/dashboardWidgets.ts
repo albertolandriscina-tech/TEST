@@ -30,6 +30,11 @@ export const WIDGET_DEFINITIONS: Record<DashboardWidgetType, WidgetDefinition> =
     type: 'cashflow',
     title: 'Flusso di cassa',
     defaultLayout: { x: 0, y: 8, w: 8, h: 14, minW: 6, minH: 9 },
+    // Su una sola colonna il grafico deve condividere lo spazio con controlli, 4
+    // schede riepilogo e il riepilogo per attività (che perdono le colonne affiancate
+    // e si impilano): senza altezza extra il grafico risultava troppo basso per
+    // essere leggibile, in alcuni casi quasi invisibile.
+    mobileExtraRows: 5,
   },
   'accounts-balance': {
     type: 'accounts-balance',
@@ -40,6 +45,7 @@ export const WIDGET_DEFINITIONS: Record<DashboardWidgetType, WidgetDefinition> =
     type: 'networth-trend',
     title: 'Andamento patrimonio netto',
     defaultLayout: { x: 0, y: 18, w: 6, h: 10, minW: 4, minH: 6 },
+    mobileExtraRows: 3,
   },
   budget: {
     type: 'budget',
@@ -65,7 +71,7 @@ export const WIDGET_DEFINITIONS: Record<DashboardWidgetType, WidgetDefinition> =
     type: 'balance-forecast',
     title: 'Tendenza saldo complessivo',
     defaultLayout: { x: 0, y: 45, w: 12, h: 12, minW: 6, minH: 7 },
-    mobileExtraRows: 3,
+    mobileExtraRows: 6,
   },
   'credit-usage': {
     type: 'credit-usage',
