@@ -12,7 +12,12 @@ import { Modal } from '../common/Modal';
 import { CategorySelect } from '../common/CategorySelect';
 
 interface TransactionFormProps {
+  /** Movimento da modificare: il salvataggio aggiorna questo stesso movimento. */
   initial?: Transaction;
+  /** Movimento da cui precompilare un NUOVO movimento (duplicazione): a differenza di
+   * "initial", il salvataggio crea un movimento a sé, e la data riparte da oggi invece
+   * di riprendere quella originale (di norma è l'unico campo da cambiare). */
+  duplicateFrom?: Transaction;
   onClose: () => void;
 }
 
@@ -23,7 +28,7 @@ interface SplitRow {
 
 const MAX_DESCRIPTION_SUGGESTIONS = 6;
 
-export function TransactionForm({ initial, onClose }: TransactionFormProps) {
+export function TransactionForm({ initial, duplicateFrom, onClose }: TransactionFormProps) {
   const accounts = useStore((s) => s.accounts.filter((a) => !a.archived), shallow);
   const categories = useStore((s) => s.categories);
   const categorizationRules = useStore((s) => s.categorizationRules);
@@ -31,18 +36,22 @@ export function TransactionForm({ initial, onClose }: TransactionFormProps) {
   const addTransaction = useStore((s) => s.addTransaction);
   const updateTransaction = useStore((s) => s.updateTransaction);
 
-  const [type, setType] = useState<TransactionType>(initial?.type ?? 'expense');
+  // In duplicazione precompiliamo tutto dal movimento di origine tranne la data, che
+  // riparte sempre da oggi (vedi "date" sotto, l'unico stato ancora legato a "initial").
+  const source = initial ?? duplicateFrom;
+
+  const [type, setType] = useState<TransactionType>(source?.type ?? 'expense');
   const [date, setDate] = useState(initial?.date ?? todayISO());
-  const [description, setDescription] = useState(initial?.description ?? '');
-  const [amount, setAmount] = useState(String(initial ? Math.abs(initial.amount) : ''));
-  const [accountId, setAccountId] = useState(initial?.accountId ?? accounts[0]?.id ?? '');
-  const [toAccountId, setToAccountId] = useState(initial?.toAccountId ?? '');
-  const [categoryId, setCategoryId] = useState(initial?.categoryId ?? '');
-  const [isSplit, setIsSplit] = useState(!!initial?.splits && initial.splits.length > 0);
+  const [description, setDescription] = useState(source?.description ?? '');
+  const [amount, setAmount] = useState(String(source ? Math.abs(source.amount) : ''));
+  const [accountId, setAccountId] = useState(source?.accountId ?? accounts[0]?.id ?? '');
+  const [toAccountId, setToAccountId] = useState(source?.toAccountId ?? '');
+  const [categoryId, setCategoryId] = useState(source?.categoryId ?? '');
+  const [isSplit, setIsSplit] = useState(!!source?.splits && source.splits.length > 0);
   const [splits, setSplits] = useState<SplitRow[]>(
-    initial?.splits?.map((s) => ({ categoryId: s.categoryId ?? '', amount: String(s.amount) })) ?? []
+    source?.splits?.map((s) => ({ categoryId: s.categoryId ?? '', amount: String(s.amount) })) ?? []
   );
-  const [note, setNote] = useState(initial?.note ?? '');
+  const [note, setNote] = useState(source?.note ?? '');
   const [error, setError] = useState<string | null>(null);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const [autoRuleName, setAutoRuleName] = useState<string | null>(null);
@@ -216,7 +225,7 @@ export function TransactionForm({ initial, onClose }: TransactionFormProps) {
   };
 
   return (
-    <Modal title={initial ? 'Modifica movimento' : 'Nuovo movimento'} onClose={onClose}>
+    <Modal title={initial ? 'Modifica movimento' : duplicateFrom ? 'Duplica movimento' : 'Nuovo movimento'} onClose={onClose}>
       <div className="space-y-3">
         <div className="grid grid-cols-3 gap-2">
           {(['expense', 'income', 'transfer'] as TransactionType[]).map((t) => (

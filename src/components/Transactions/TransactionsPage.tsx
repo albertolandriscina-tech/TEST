@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Plus, Trash2, Pencil, ArrowDownCircle, ArrowUpCircle, ArrowRightLeft, Download, Upload } from 'lucide-react';
+import { Plus, Trash2, Pencil, Copy, ArrowDownCircle, ArrowUpCircle, ArrowRightLeft, Download, Upload } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import type { Transaction, TransactionType } from '../../types';
 import { formatCurrency, formatDate } from '../../utils/format';
@@ -29,6 +29,7 @@ export function TransactionsPage() {
 
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Transaction | null>(null);
+  const [duplicating, setDuplicating] = useState<Transaction | null>(null);
   const [deleting, setDeleting] = useState<Transaction | null>(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [bulkEditing, setBulkEditing] = useState(false);
@@ -196,6 +197,9 @@ export function TransactionsPage() {
                   <button className="btn-ghost !p-1.5" onClick={() => setEditing(t)}>
                     <Pencil size={14} />
                   </button>
+                  <button className="btn-ghost !p-1.5" onClick={() => setDuplicating(t)}>
+                    <Copy size={14} />
+                  </button>
                   <button className="btn-ghost !p-1.5 text-red-500" onClick={() => setDeleting(t)}>
                     <Trash2 size={14} />
                   </button>
@@ -258,6 +262,9 @@ export function TransactionsPage() {
                     <button className="btn-ghost !p-1.5" onClick={() => setEditing(t)}>
                       <Pencil size={14} />
                     </button>
+                    <button className="btn-ghost !p-1.5" onClick={() => setDuplicating(t)} title="Duplica movimento">
+                      <Copy size={14} />
+                    </button>
                     <button className="btn-ghost !p-1.5 text-red-500" onClick={() => setDeleting(t)}>
                       <Trash2 size={14} />
                     </button>
@@ -272,6 +279,7 @@ export function TransactionsPage() {
       {showImport && <ImportTransactionsModal onClose={() => setShowImport(false)} />}
       {showForm && <TransactionForm onClose={() => setShowForm(false)} />}
       {editing && <TransactionForm initial={editing} onClose={() => setEditing(null)} />}
+      {duplicating && <TransactionForm duplicateFrom={duplicating} onClose={() => setDuplicating(null)} />}
       {deleting && (
         <ConfirmDialog
           title="Elimina movimento"
