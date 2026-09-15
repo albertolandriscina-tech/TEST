@@ -17,13 +17,16 @@ export const WIDGET_DEFINITIONS: Record<DashboardWidgetType, WidgetDefinition> =
   kpi: {
     type: 'kpi',
     title: 'Riepilogo del periodo',
-    defaultLayout: { x: 0, y: 0, w: 12, h: 4, minW: 3, minH: 2 },
+    // h:4 lasciava alle 4 StatCard poco meno spazio verticale di quanto servisse
+    // (etichetta + valore + padding della card), causando uno scroll interno
+    // indesiderato all'interno del widget anche su desktop.
+    defaultLayout: { x: 0, y: 0, w: 12, h: 5, minW: 3, minH: 2 },
     mobileExtraRows: 3,
   },
   'networth-breakdown': {
     type: 'networth-breakdown',
     title: 'Composizione del patrimonio',
-    defaultLayout: { x: 0, y: 4, w: 12, h: 4, minW: 3, minH: 2 },
+    defaultLayout: { x: 0, y: 4, w: 12, h: 5, minW: 3, minH: 2 },
     mobileExtraRows: 3,
   },
   cashflow: {
