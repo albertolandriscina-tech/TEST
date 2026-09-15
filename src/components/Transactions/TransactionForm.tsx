@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { shallow } from 'zustand/shallow';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, History } from 'lucide-react';
 import type { Transaction, TransactionType } from '../../types';
 import { TRANSACTION_TYPE_LABELS } from '../../types';
 import { useStore } from '../../store/useStore';
@@ -21,10 +21,13 @@ interface SplitRow {
   amount: string;
 }
 
+const MAX_DESCRIPTION_SUGGESTIONS = 6;
+
 export function TransactionForm({ initial, onClose }: TransactionFormProps) {
   const accounts = useStore((s) => s.accounts.filter((a) => !a.archived), shallow);
   const categories = useStore((s) => s.categories);
   const categorizationRules = useStore((s) => s.categorizationRules);
+  const transactions = useStore((s) => s.transactions);
   const addTransaction = useStore((s) => s.addTransaction);
   const updateTransaction = useStore((s) => s.updateTransaction);
 
@@ -43,14 +46,70 @@ export function TransactionForm({ initial, onClose }: TransactionFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const [autoRuleName, setAutoRuleName] = useState<string | null>(null);
+  const [showDescriptionSuggestions, setShowDescriptionSuggestions] = useState(false);
+  const descriptionBoxRef = useRef<HTMLDivElement>(null);
 
-  const suggestCategoryFromDescription = () => {
-    if (isSplit || type === 'transfer' || categoryId || !accountId || !description.trim()) return;
-    const rule = findMatchingRule(categorizationRules, { description, type, accountId });
+  const suggestCategoryFromDescription = (desc: string) => {
+    if (isSplit || type === 'transfer' || categoryId || !accountId || !desc.trim()) return;
+    const rule = findMatchingRule(categorizationRules, { description: desc, type, accountId });
     if (rule) {
       setCategoryId(rule.categoryId);
       setAutoRuleName(rule.name);
     }
+  };
+
+  // Descrizioni già usate in passato, ordinate per frequenza (le più usate per prime,
+  // a parità di frequenza vince la più recente): permettono di riconoscere subito un
+  // movimento ricorrente digitandone solo una parte, senza doverlo riscrivere da zero.
+  const descriptionHistory = useMemo(() => {
+    const byKey = new Map<string, { label: string; count: number; lastDate: string }>();
+    for (const t of transactions) {
+      const label = t.description.trim();
+      if (!label) continue;
+      const key = label.toLowerCase();
+      const existing = byKey.get(key);
+      if (existing) {
+        existing.count += 1;
+        if (t.date > existing.lastDate) existing.lastDate = t.date;
+      } else {
+        byKey.set(key, { label, count: 1, lastDate: t.date });
+      }
+    }
+    return [...byKey.values()]
+      .sort((a, b) => b.count - a.count || (a.lastDate < b.lastDate ? 1 : -1))
+      .map((e) => e.label);
+  }, [transactions]);
+
+  const descriptionSuggestions = useMemo(() => {
+    const query = description.trim().toLowerCase();
+    const matches = query
+      ? descriptionHistory.filter((d) => d.toLowerCase().includes(query) && d.toLowerCase() !== query)
+      : descriptionHistory;
+    return matches.slice(0, MAX_DESCRIPTION_SUGGESTIONS);
+  }, [description, descriptionHistory]);
+
+  useEffect(() => {
+    if (!showDescriptionSuggestions) return;
+    const handleClick = (e: MouseEvent) => {
+      if (descriptionBoxRef.current && !descriptionBoxRef.current.contains(e.target as Node)) {
+        setShowDescriptionSuggestions(false);
+      }
+    };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowDescriptionSuggestions(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('keydown', handleKey);
+    };
+  }, [showDescriptionSuggestions]);
+
+  const selectDescriptionSuggestion = (value: string) => {
+    setDescription(value);
+    setShowDescriptionSuggestions(false);
+    suggestCategoryFromDescription(value);
   };
 
   useEffect(() => {
@@ -205,15 +264,36 @@ export function TransactionForm({ initial, onClose }: TransactionFormProps) {
           </div>
         </div>
 
-        <div>
+        <div className="relative" ref={descriptionBoxRef}>
           <label className="label">Descrizione</label>
           <input
             className="input"
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            onBlur={suggestCategoryFromDescription}
+            onChange={(e) => {
+              setDescription(e.target.value);
+              setShowDescriptionSuggestions(true);
+            }}
+            onFocus={() => setShowDescriptionSuggestions(true)}
+            onBlur={() => suggestCategoryFromDescription(description)}
             placeholder="Es. Spesa supermercato"
+            autoComplete="off"
           />
+          {showDescriptionSuggestions && descriptionSuggestions.length > 0 && (
+            <div className="absolute z-20 mt-1 w-full max-h-52 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg py-1">
+              {descriptionSuggestions.map((suggestion) => (
+                <button
+                  key={suggestion}
+                  type="button"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left text-slate-600 hover:bg-slate-50 truncate"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => selectDescriptionSuggestion(suggestion)}
+                >
+                  <History size={13} className="text-slate-300 shrink-0" />
+                  <span className="truncate">{suggestion}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
