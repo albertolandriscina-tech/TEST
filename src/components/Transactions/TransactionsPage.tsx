@@ -168,27 +168,31 @@ export function TransactionsPage() {
               onChange={() => toggleSelect(t.id)}
             />
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 min-w-0">
-                {typeIcon[t.type]}
-                <span className="font-medium text-slate-700 truncate">{t.description}</span>
-              </div>
-              <div className="text-xs text-slate-400 mt-0.5 truncate">
-                {formatDate(t.date)} ·{' '}
-                {t.type === 'transfer' ? `${accountName(t.accountId)} → ${accountName(t.toAccountId!)}` : accountName(t.accountId)}
-              </div>
-              {t.type !== 'transfer' && (
-                <CategoryBadge categoryId={t.categoryId} categories={categories} splits={t.splits} className="text-xs text-slate-400 mt-0.5" />
-              )}
-              <div className="flex items-center justify-between mt-2">
+              <div className="flex items-center justify-between gap-2 min-w-0">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  {typeIcon[t.type]}
+                  <span className="font-medium text-slate-700 truncate">{t.description}</span>
+                </div>
                 <span
-                  className={`font-semibold ${
+                  className={`font-semibold shrink-0 ${
                     t.type === 'income' ? 'text-emerald-600' : t.type === 'expense' ? 'text-red-600' : 'text-blue-600'
                   }`}
                 >
                   {t.type === 'income' ? '+' : t.type === 'expense' ? '-' : ''}
                   {formatCurrency(t.amount)}
                 </span>
-                <div className="flex gap-1">
+              </div>
+              <div className="text-xs text-slate-400 mt-0.5 truncate">
+                {formatDate(t.date)} ·{' '}
+                {t.type === 'transfer' ? `${accountName(t.accountId)} → ${accountName(t.toAccountId!)}` : accountName(t.accountId)}
+              </div>
+              <div className="flex items-center justify-between mt-1.5">
+                {t.type !== 'transfer' ? (
+                  <CategoryBadge categoryId={t.categoryId} categories={categories} splits={t.splits} className="text-xs text-slate-400" />
+                ) : (
+                  <span />
+                )}
+                <div className="flex gap-1 shrink-0">
                   <button className="btn-ghost !p-1.5" onClick={() => setEditing(t)}>
                     <Pencil size={14} />
                   </button>
