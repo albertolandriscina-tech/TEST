@@ -1,4 +1,5 @@
-import { Check, Monitor, Moon, Sun } from 'lucide-react';
+import { useState } from 'react';
+import { Check, Monitor, Moon, Sun, Sparkles, Eraser } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import {
   APP_THEME_LABELS,
@@ -10,6 +11,7 @@ import {
   type FontFamily,
 } from '../../types';
 import { COLOR_THEME_SCALES, FONT_STACKS } from '../../utils/theme';
+import { ConfirmDialog } from '../common/ConfirmDialog';
 
 const THEME_ICONS: Record<AppTheme, typeof Sun> = {
   light: Sun,
@@ -20,6 +22,10 @@ const THEME_ICONS: Record<AppTheme, typeof Sun> = {
 export function SettingsPage() {
   const settings = useStore((s) => s.settings);
   const updateSettings = useStore((s) => s.updateSettings);
+  const loadDemoData = useStore((s) => s.loadDemoData);
+  const resetAllData = useStore((s) => s.resetAllData);
+  const [confirmDemo, setConfirmDemo] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
 
   return (
     <div className="space-y-4 max-w-3xl">
@@ -128,11 +134,60 @@ export function SettingsPage() {
         </select>
       </div>
 
+      <div className="card">
+        <h3 className="text-sm font-semibold text-slate-700 mb-1">Dati</h3>
+        <p className="text-xs text-slate-500 mb-3">
+          Popola l'app con un set di dati di esempio per esplorarne le funzionalità, oppure elimina definitivamente
+          tutti i tuoi dati.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <button
+            className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+            onClick={() => setConfirmDemo(true)}
+          >
+            <Sparkles size={18} className="text-primary-500 shrink-0" />
+            Carica dati di esempio
+          </button>
+          <button
+            className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+            onClick={() => setConfirmReset(true)}
+          >
+            <Eraser size={18} className="text-red-500 shrink-0" />
+            Svuota tutti i dati
+          </button>
+        </div>
+      </div>
+
       <div className="text-center">
         <a href="#/privacy" className="text-xs text-slate-400 hover:text-slate-600 hover:underline">
           Informativa sulla privacy
         </a>
       </div>
+
+      {confirmDemo && (
+        <ConfirmDialog
+          title="Carica dati di esempio"
+          message="Verranno sostituiti tutti i dati attuali con un set di dati di esempio (conti, movimenti, budget, investimenti e patrimonio) per esplorare l'app. Continuare?"
+          confirmLabel="Carica"
+          onCancel={() => setConfirmDemo(false)}
+          onConfirm={() => {
+            loadDemoData();
+            setConfirmDemo(false);
+          }}
+        />
+      )}
+      {confirmReset && (
+        <ConfirmDialog
+          title="Svuota tutti i dati"
+          message="Verranno eliminati definitivamente tutti i conti, movimenti, budget, investimenti e beni patrimoniali. Continuare?"
+          confirmLabel="Svuota"
+          onCancel={() => setConfirmReset(false)}
+          onConfirm={() => {
+            resetAllData();
+            setConfirmReset(false);
+          }}
+        />
+      )}
     </div>
   );
 }
